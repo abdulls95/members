@@ -160,3 +160,4 @@ async function au(t){const{data}=await sb.from("audit_logs").select("*").order("
  t.innerHTML=`<div class="box"><h2>سجل التدقيق (آخر 100)</h2>${tbl(["الوقت","الجدول","العملية","السجل"],(data||[]).map(x=>`<tr><td>${x.at.slice(0,16).replace("T"," ")}</td><td>${x.entity}</td><td>${x.action}</td><td>${esc(x.record_id)}</td></tr>`))}</div>`}
 route();
 </script></body></html>
+<!-- GitHub Pages redeploy -->
