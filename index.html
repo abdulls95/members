@@ -79,11 +79,53 @@ function resetV(){
 async function route(){
  if(!sb)return app.innerHTML=`<div class="box bad">تعذر تحميل مكتبة Supabase من الإنترنت. تأكد من الاتصال أو من عدم وجود مانع إعلانات، ثم حدّث الصفحة.</div>`;
  if(recovery)return resetV();
- const{data:{session}}=await sb.auth.getSession();if(!session)return location.hash==="#/register"?regV():authV("in");
- const{data:p}=await sb.from("profiles").select("*").eq("user_id",session.user.id).maybeSingle();
- prof=p||{role:"SHAREHOLDER",full_name:session.user.email};
- app.innerHTML=`<div class="top box"><div><b>${esc(prof.full_name||session.user.email)}</b> <span class="mu">(${prof.role})</span></div><div><button class="g" id="cp">تغيير كلمة المرور</button> <button class="g" id="lo">خروج</button></div></div><div id="c"></div>`;
+
+ const{data:{session},error:sessionError}=await sb.auth.getSession();
+ if(sessionError)return app.innerHTML=`<div class="box bad">تعذر قراءة جلسة الدخول: ${esc(sessionError.message)}</div>`;
+ if(!session)return location.hash==="#/register"?regV():authV("in");
+
+ // Read the profile and the secure database-side role helper.
+ // The role is never inferred from the email address.
+ const[{data:p,error:profileError},{data:secureRole,error:roleError}]=await Promise.all([
+   sb.from("profiles").select("*").eq("user_id",session.user.id).maybeSingle(),
+   sb.rpc("my_role")
+ ]);
+
+ if(profileError){
+   return app.innerHTML=`<div class="box bad">
+     <h2>تعذر قراءة صلاحيات الحساب</h2>
+     <p>حسابك تم تسجيل دخوله، لكن التطبيق لم يستطع قراءة سجل الصلاحيات من قاعدة البيانات.</p>
+     <pre style="white-space:pre-wrap;direction:ltr;text-align:left">${esc(profileError.message)}${profileError.code?`\ncode=${esc(profileError.code)}`:""}</pre>
+     <button class="g" id="retry">إعادة المحاولة</button>
+     <button class="g" id="logout2">خروج</button>
+   </div>`;
+ }
+ if(roleError){
+   return app.innerHTML=`<div class="box bad">
+     <h2>تعذر التحقق من صلاحية الحساب</h2>
+     <p>سجل الحساب موجود، لكن دالة التحقق من الدور لم تُرجع الصلاحية.</p>
+     <pre style="white-space:pre-wrap;direction:ltr;text-align:left">${esc(roleError.message)}${roleError.code?`\ncode=${esc(roleError.code)}`:""}</pre>
+     <button class="g" id="retry">إعادة المحاولة</button>
+     <button class="g" id="logout2">خروج</button>
+   </div>`;
+ }
+
+ // Prefer the database-side role helper, with the profile role as a consistency check.
+ const role=secureRole||p?.role;
+ if(!p || !role){
+   return app.innerHTML=`<div class="box bad">
+     <h2>لم يتم العثور على صلاحية للحساب</h2>
+     <p>تم تسجيل الدخول بنجاح، لكن لا يوجد دور صالح مرتبط بهذا الحساب.</p>
+     <button class="g" id="retry">إعادة المحاولة</button>
+     <button class="g" id="logout2">خروج</button>
+   </div>`;
+ }
+
+ prof={...p,role};
+ app.innerHTML=`<div class="top box"><div><b>${esc(prof.full_name||session.user.email)}</b> <span class="mu">(${esc(prof.role)})</span></div><div><button class="g" id="cp">تغيير كلمة المرور</button> <button class="g" id="lo">خروج</button></div></div><div id="c"></div>`;
  $("#lo").onclick=async()=>{await sb.auth.signOut();prof=null;authV("in")};
+ $("#retry").onclick=()=>route();
+ $("#logout2").onclick=async()=>{await sb.auth.signOut();prof=null;authV("in")};
  $("#cp").onclick=()=>{recovery=true;resetV()};
  STAFF.includes(prof.role)?staffV():shV()}
 // ---------- لوحة المساهم (بياناته فقط بحماية RLS) ----------
@@ -160,4 +202,3 @@ async function au(t){const{data}=await sb.from("audit_logs").select("*").order("
  t.innerHTML=`<div class="box"><h2>سجل التدقيق (آخر 100)</h2>${tbl(["الوقت","الجدول","العملية","السجل"],(data||[]).map(x=>`<tr><td>${x.at.slice(0,16).replace("T"," ")}</td><td>${x.entity}</td><td>${x.action}</td><td>${esc(x.record_id)}</td></tr>`))}</div>`}
 route();
 </script></body></html>
-<!-- GitHub Pages redeploy -->
