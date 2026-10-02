@@ -228,7 +228,11 @@ async function ov(t){
  ${cd(ps,"الأسهم المدفوعة")}${cd(ts-ps,"الأسهم المتبقية")}${cd(F(exp),"التحصيل المتوقع هذا الشهر")}${cd(F(act),"التحصيل الفعلي هذا الشهر")}
  ${cd(F(late.reduce((x,y)=>x+H(y.remaining),0)),"المبالغ المتأخرة")}${cd(new Set(late.map(x=>x.commitment_id)).size,"مساهمون متأخرون")}</div>`}
 async function setSh(id,status){let note;if(status==="CHANGES_REQUESTED"){note=prompt("ما التعديل المطلوب؟");if(!note)return}
- const r=await sb.from("shareholders").update(note?{status,notes:note}:{status}).eq("id",id);if(r.error)alert("تعذر التنفيذ (الصلاحية؟)");staffV()}
+ const r=await sb.from("shareholders").update(note?{status,notes:note}:{status}).eq("id",id);if(r.error){   alert(     "الخطأ:
+" +     "الكود: " + (r.error.code || "") + "
+" +     "الرسالة: " + (r.error.message || "") + "
+" +     "التفاصيل: " + (r.error.details || "") + "
+" +     "الاقتراح: " + (r.error.hint || "")   );   return; };staffV()}
 async function rq(t){
  const{data}=await sb.from("shareholders").select("*,commitments(shares,total,frequency)").in("status",["PENDING","CHANGES_REQUESTED"]).order("created_at");
  t.innerHTML=`<div class="box"><h2>طلبات التسجيل</h2>${tbl(["الاسم","الهاتف","الهوية","الأسهم","الالتزام","التاريخ","إجراء"],(data||[]).map(s=>{const c=s.commitments?.[0]||{};
