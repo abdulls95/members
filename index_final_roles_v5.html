@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- FINAL ROLES UI v5: 2026-10-03 -->
+<title>مجموعة آل عامر شجاع | نظام المساهمين</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f1ec;--c:#fff;--ink:#1d2b2a;--m:#66726f;--l:#d9d5ca;--a:#0f5c4d;--w:#a33b2b}
+@media (prefers-color-scheme:dark){:root{--bg:#121816;--c:#1b2421;--ink:#e8ede9;--m:#93a09b;--l:#2f3a36;--a:#3fb59c;--w:#e57b68}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Geeza Pro","Segoe UI",Tahoma,sans-serif;line-height:1.6}
+main{max-width:1000px;margin:0 auto;padding:12px}h2{font-size:1.05rem;margin:6px 0}
+button,input,select,textarea{font:inherit;color:inherit}button{background:var(--a);color:#fff;border:0;border-radius:8px;padding:7px 12px;cursor:pointer}
+button.g{background:transparent;color:var(--ink);border:1px solid var(--l)}button.on{background:var(--ink);color:var(--bg)}button:disabled{opacity:.5}
+input,select,textarea{background:transparent;border:1px solid var(--l);border-radius:8px;padding:8px;min-width:0;width:100%}select option{color:#000}
+.box{background:var(--c);border:1px solid var(--l);border-radius:10px;padding:12px;margin:8px 0}.card{max-width:440px;margin:24px auto}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}.f label{font-size:.85rem;color:var(--m)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+.st b{display:block;font-size:1.2rem;color:var(--a)}.st span{font-size:.78rem;color:var(--m)}
+nav{display:flex;gap:6px;overflow-x:auto;padding:6px 0}.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:5px 6px;border-bottom:1px solid var(--l);text-align:right;white-space:nowrap}th{color:var(--m);font-size:.78rem}
+.bad{color:var(--w)}.ok{color:var(--a)}.mu{color:var(--m);font-size:.85rem}#msg{white-space:pre-wrap;word-break:break-word}a{color:var(--a)}button.lk{background:none;border:0;padding:0;color:var(--a);text-decoration:underline;cursor:pointer}.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.actions{display:flex;gap:6px;flex-wrap:wrap}.pill{display:inline-block;border:1px solid var(--l);border-radius:999px;padding:2px 8px;font-size:.78rem}.notice{background:var(--c);border:1px solid var(--l);border-right:4px solid var(--a);border-radius:10px;padding:10px;margin:8px 0}.danger{background:var(--w)}.mini{padding:4px 8px;font-size:.78rem}.wide{grid-column:1/-1}.progress{height:8px;background:var(--l);border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--a)}details pre{white-space:pre-wrap;word-break:break-word;max-width:420px}.nowrap{white-space:nowrap}@media(max-width:560px){main{padding:8px}.box{padding:10px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.st b{font-size:1.05rem}.top{align-items:flex-start}nav button{white-space:nowrap}.tw{margin-inline:-4px}table{font-size:.8rem}.actions{width:100%}.actions button{flex:1 1 auto}.card{margin:12px auto}.notice{font-size:.9rem}}
+@media(max-width:390px){.grid{grid-template-columns:1fr}.st b{font-size:1.08rem}}
+</style></head><body><main id="app"><div class="box">جاري التحميل...</div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// القيمتان العامتان فقط. لا تضع هنا service_role أو secret أو كلمة مرور قاعدة البيانات أبدًا.
+const SUPABASE_URL="https://ovzjhaykcrtvyoxneydc.supabase.co";
+const SUPABASE_KEY="sb_publishable_t6rvrM-OF5_S4lnxsa6HEQ_tTl_Gzeo";
+const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+const $=s=>document.querySelector(s),app=$("#app");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const M=v=>Number(v||0).toLocaleString("en-US",{maximumFractionDigits:2}),H=v=>Math.round(Number(v||0)*100),F=h=>M(h/100);
+const STAFF=["ADMIN","MANAGER","SUPERVISOR","ACCOUNTANT","VIEWER"],ROLE_AR={SHAREHOLDER:"مساهم",ADMIN:"مدير النظام",MANAGER:"مدير",SUPERVISOR:"مشرف",ACCOUNTANT:"محاسب",VIEWER:"مشاهد"},FR={FULL:"دفعة كاملة",MONTHLY:"شهري",QUARTERLY:"ربع سنوي",SEMIANNUAL:"نصف سنوي",ANNUAL:"سنوي"};
+const ST={PENDING:"بانتظار الموافقة",ACTIVE:"فعّال",REJECTED:"مرفوض",CHANGES_REQUESTED:"مطلوب تعديل",SUSPENDED:"موقوف"};
+const PS={PENDING:"بانتظار التحقق",APPROVED:"معتمدة",REJECTED:"مرفوضة",VOID:"ملغاة"},SS={PAID:"مدفوع",LATE:"متأخر",PARTIAL:"مدفوع جزئيًا",PARTIAL_LATE:"متأخر جزئيًا",UNPAID:"غير مدفوع"};
+const RT={SHARE_INCREASE:"زيادة أسهم",SHARE_REDUCTION:"تخفيض أسهم",WITHDRAWAL:"طلب انسحاب"};
+const CT={INITIAL:"تأسيسي",INCREASE:"زيادة",REDUCTION:"تخفيض",WITHDRAWAL:"انسحاب"};
+const ENTITY_AR={payments:"الدفعات",shareholders:"المساهمون",commitments:"الالتزامات",member_requests:"طلبات تغيير المساهمة",share_changes:"سجل تغييرات الأسهم",settings:"الإعدادات",acknowledgments:"الإقرارات",profiles:"الحسابات"};
+const ACTION_AR={INSERT:"إضافة",UPDATE:"تعديل",DELETE:"حذف"};
+const RS={PENDING:"بانتظار المراجعة",UNDER_REVIEW:"قيد المراجعة",CHANGES_REQUESTED:"مطلوب تعديل",REJECTED:"مرفوض",APPROVED:"معتمد",EXECUTED:"تم التنفيذ"};
+let recovery=false,prof=null,tab="ov",panelMode=null,hasOwnShare=false;
+const DEFAULT_SETTINGS={share_price:10,term_months:60,start_date:"2026-10-01",ack_text:"أقر بأنني تقدمت للمشاركة في المبادرة الاستثمارية بإرادتي، وأن المساهمة الاستثمارية قد تحقق أرباحًا أو تتعرض للخسارة ولا توجد عوائد مضمونة، وأقر بصحة البيانات المقدمة والتزامي بالسياسات المعتمدة.",min_shares:1,allow_share_increase:true,allow_share_reduction:true,allow_withdrawal:true,all_changes_require_approval:true,allow_reduction_below_initial:false,withdrawal_policy:"تحددها الإدارة"};
+let APP_SETTINGS={...DEFAULT_SETTINGS};
+const msg=(t,bad)=>{const m=$("#msg");if(m){m.textContent=t;m.className=bad?"bad":"ok"}};
+const tbl=(h,r)=>`<div class="tw"><table><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr>${r.join("")||`<tr><td colspan="${h.length}">لا توجد بيانات</td></tr>`}</table></div>`;
+const canP=()=>["ADMIN","MANAGER","SUPERVISOR"].includes(prof?.role),
+canInit=()=>["ADMIN","MANAGER","SUPERVISOR"].includes(prof?.role),
+canShareChange=()=>["ADMIN","MANAGER","SUPERVISOR"].includes(prof?.role),
+canPay=()=>["ADMIN","MANAGER","ACCOUNTANT"].includes(prof?.role),
+canExport=()=>["ADMIN","MANAGER","SUPERVISOR","ACCOUNTANT"].includes(prof?.role),
+isViewer=()=>prof?.role==="VIEWER",
+isAdm=()=>prof?.role==="ADMIN";
+
+function maskedPhone(v){
+ const s=String(v||"").trim(); if(!s)return "-";
+ const tail=s.replace(/\D/g,"").slice(-4);
+ return tail?`••••${tail}`:"مخفي";
+}
+function maskedEmail(v){
+ const s=String(v||"").trim(); if(!s)return "-";
+ const p=s.split("@"); if(p.length!==2)return "مخفي";
+ const name=p[0]||"", shown=name.slice(0,2);
+ return `${shown}${name.length>2?"•••":""}@${p[1]}`;
+}
+function maskedId(v){
+ const s=String(v||"").trim(); if(!s)return "-";
+ const tail=s.slice(-4);
+ return `••••${tail}`;
+}
+const officialShareholders=D=>(D?.shareholders||[]).filter(x=>!x.is_test),officialIds=D=>new Set(officialShareholders(D).map(x=>x.id));
+const today=()=>new Date().toISOString().slice(0,10);
+const monthKey=d=>String(d||"").slice(0,7);
+const nsum=(rows,key)=>(rows||[]).reduce((a,x)=>a+Number(x?.[key]||0),0);
+const pct=(a,b)=>b>0?Math.min(100,Math.round((Number(a||0)/Number(b))*10000)/100):0;
+const roleLabel=r=>ROLE_AR[r]||r||"-";
+const stateLabel=s=>SS[s]||s||"-";
+const schedState=x=>x?.state_detail||x?.state;
+const scheduleTable=rows=>tbl(["#","الاستحقاق","المطلوب","المدفوع","المتبقي","الحالة"],(rows||[]).map(x=>{const st=schedState(x);return `<tr><td>${x.seq}</td><td>${x.due_date}</td><td>${M(x.amount_due)}</td><td>${M(x.amount_paid)}</td><td>${M(x.remaining)}</td><td class="${["LATE","PARTIAL_LATE"].includes(st)?"bad":""}">${stateLabel(st)}</td></tr>`}));
+const requestDetails=r=>{let d=r?.requested_data??{};if(typeof d==="string"){try{d=JSON.parse(d)}catch{d={}}}const a=[];if(["SHARE_INCREASE","SHARE_REDUCTION"].includes(r?.request_type))a.push(`<b>عدد الأسهم:</b> ${M(d.shares||0)}`);if(r?.request_type==="WITHDRAWAL")a.push("<b>نوع الطلب:</b> انسحاب من المساهمة");if(d?.note)a.push(`<b>ملاحظة المساهم:</b> ${esc(d.note)}`);return a.join("<br>")||`<span class="mu">لا توجد تفاصيل إضافية</span>`};
+const setInline=(id,text,bad=false)=>{const el=document.getElementById(id);if(el){el.textContent=text;el.className=bad?"bad":"ok"}};
+const jsonText=v=>{try{return JSON.stringify(v??{},null,2)}catch{return String(v??"")}};
+async function loadSettings(){
+ try{const{data,error}=await sb.from("settings").select("key,value");if(!error){const o={};(data||[]).forEach(x=>o[x.key]=x.value);APP_SETTINGS={...DEFAULT_SETTINGS,...o}}}catch(e){}
+}
+async function compressReceipt(file){
+ if(!file||!file.type?.startsWith("image/")||file.size<=10e6)return file;
+ try{
+  const url=URL.createObjectURL(file),img=new Image();
+  await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+  const max=2600,scale=Math.min(1,max/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+  const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
+  const blob=await new Promise(res=>cv.toBlob(res,"image/jpeg",.84));
+  if(blob&&blob.size<file.size)return new File([blob],(file.name.replace(/\.[^.]+$/,'')||'receipt')+".jpg",{type:"image/jpeg"});
+ }catch(e){}
+ return file;
+}
+async function uploadReceiptFile(file,shareholderId){
+ if(!file)return {path:null,error:null};
+ if(file.size>50e6||!/^(image\/|application\/pdf)/.test(file.type))return {path:null,error:"السند يجب أن يكون صورة أو PDF وحجمه لا يتجاوز 50MB"};
+ file=await compressReceipt(file);
+ const ext=(file.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").slice(0,5)||"bin";
+ const path=`${shareholderId}/${crypto.randomUUID()}.${ext}`;
+ const u=await sb.storage.from("receipts").upload(path,file,{contentType:file.type});
+ return u.error?{path:null,error:"تعذر رفع السند: "+u.error.message}:{path,error:null};
+}
+async function openReceipt(path){
+ const{data,error}=await sb.storage.from("receipts").createSignedUrl(path,300);
+ if(error)return alert("تعذر فتح السند: "+error.message);
+ window.open(data.signedUrl,"_blank","noopener");
+}
+function downloadCSV(name,headers,rows){
+ const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',csv='\ufeff'+[headers,...rows].map(r=>r.map(q).join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function printAdminReport(D){
+ const real=officialShareholders(D),realIds=new Set(real.map(x=>x.id)),sMap=Object.fromEntries(real.map(x=>[x.id,x])),cMap={};D.commitments.filter(x=>realIds.has(x.shareholder_id)).forEach(x=>{if(!cMap[x.shareholder_id])cMap[x.shareholder_id]=x});
+ const schMap={};D.schedule.forEach(x=>(schMap[x.commitment_id]??=[]).push(x));
+ const pMap={};D.payments.filter(x=>x.status==="APPROVED"&&realIds.has(x.shareholder_id)).forEach(x=>pMap[x.shareholder_id]=(pMap[x.shareholder_id]||0)+Number(x.amount||0));
+ const active=real.filter(x=>x.status==="ACTIVE"),activeIds=new Set(active.map(x=>x.id)),activeC=D.commitments.filter(x=>activeIds.has(x.shareholder_id)),activeCids=new Set(activeC.map(x=>x.id)),sched=D.schedule.filter(x=>activeCids.has(x.commitment_id));
+ const totalShares=activeC.reduce((a,x)=>a+Number(x.shares||0),0),monthly=activeC.reduce((a,x)=>a+Number(x.shares||0)*Number(x.share_price||APP_SETTINGS.share_price||10),0),expected=nsum(sched,"amount_due"),paid=nsum(D.payments.filter(x=>x.status==="APPROVED"&&activeIds.has(x.shareholder_id)),"amount"),remaining=nsum(sched,"remaining");
+ const members=real.map(s=>{const cm=cMap[s.id]||{},sc=schMap[cm.id]||[];return `<tr><td>${esc(s.member_no||"-")}</td><td>${esc(s.full_name||"-")}</td><td>${esc(ST[s.status]||s.status)}</td><td>${M(cm.initial_shares??cm.shares??0)}</td><td>${M(cm.shares||0)}</td><td>${M(Number(cm.shares||0)*Number(cm.share_price||APP_SETTINGS.share_price||10))}</td><td>${M(nsum(sc,"amount_due"))}</td><td>${M(pMap[s.id]||0)}</td><td>${M(nsum(sc,"remaining"))}</td></tr>`}).join("");
+ const pays=D.payments.filter(p=>realIds.has(p.shareholder_id)).slice().sort((a,b)=>String(b.paid_on||"").localeCompare(String(a.paid_on||""))).map(p=>{const sh=sMap[p.shareholder_id]||{};return `<tr><td>${esc(p.paid_on||"-")}</td><td>${esc(sh.member_no||"-")}</td><td>${esc(sh.full_name||"-")}</td><td>${M(p.amount)}</td><td>${esc(p.reference||"-")}</td><td>${esc(PS[p.status]||p.status)}</td></tr>`}).join("");
+ const w=window.open("","_blank");if(!w)return alert("تعذر فتح نافذة التقرير. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.");
+ w.document.open();w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير مجموعة آل عامر شجاع</title><style>@page{size:A4;margin:12mm}*{box-sizing:border-box}body{font-family:"Geeza Pro","Segoe UI",Tahoma,sans-serif;color:#172220;margin:0;direction:rtl}h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:18px 0 7px}.meta{font-size:11px;color:#5f6b67;margin-bottom:12px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.card{border:1px solid #cfcfcf;border-radius:8px;padding:8px}.card b{display:block;font-size:16px}.card span{font-size:10px;color:#666}table{width:100%;border-collapse:collapse;font-size:9.5px}th,td{border-bottom:1px solid #ddd;padding:5px;text-align:right}th{background:#f4f4f4}.foot{margin-top:14px;font-size:9px;color:#777}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><h1>مجموعة آل عامر شجاع — تقرير نظام المساهمين</h1><div class="meta">تاريخ التقرير: ${esc(new Date().toLocaleString("ar-SA"))}</div><div class="cards"><div class="card"><b>${active.length}</b><span>المساهمون الفعّالون</span></div><div class="card"><b>${M(totalShares)}</b><span>الأسهم الحالية</span></div><div class="card"><b>${M(monthly)} ر.س</b><span>الالتزام الشهري حسب الأسهم الحالية</span></div><div class="card"><b>${M(expected)} ر.س</b><span>إجمالي الالتزام حتى نهاية المشروع</span></div><div class="card"><b>${M(paid)} ر.س</b><span>إجمالي المدفوع المعتمد</span></div><div class="card"><b>${M(remaining)} ر.س</b><span>إجمالي المتبقي</span></div></div><h2>المساهمون</h2><table><thead><tr><th>الرقم</th><th>الاسم</th><th>الحالة</th><th>التأسيسية</th><th>الحالية</th><th>شهري</th><th>إجمالي المشروع</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>${members||`<tr><td colspan="9">لا توجد بيانات</td></tr>`}</tbody></table><h2>الدفعات</h2><table><thead><tr><th>التاريخ</th><th>رقم المساهم</th><th>الاسم</th><th>المبلغ</th><th>المرجع</th><th>الحالة</th></tr></thead><tbody>${pays||`<tr><td colspan="6">لا توجد دفعات</td></tr>`}</tbody></table><div class="foot">تقرير رسمي — تم استبعاد السجلات التجريبية تلقائيًا.</div></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},350);
+}
+async function safeTable(name,query){try{return await query}catch(e){return {data:null,error:e}}}
+
+sb&&sb.auth.onAuthStateChange(ev=>{if(ev==="PASSWORD_RECOVERY"){recovery=true;setTimeout(route,0)}});
+
+// ---------- التشخيص ----------
+const errText=e=>`${e?.name||"Error"} | ${e?.message||e} | status=${e?.status??"-"} | code=${e?.code??"-"}`;
+const DG=`<p><button type="button" class="g" id="dgb">فحص الاتصال بـ Supabase</button></p><pre id="dg" class="mu" style="white-space:pre-wrap;direction:ltr;text-align:left"></pre>`;
+async function diag(){const o=["page origin: "+location.origin,"supabase client: "+(sb?"created":"NOT created"),"SUPABASE_URL: "+SUPABASE_URL,"key prefix: "+SUPABASE_KEY.slice(0,18)+"..."];
+ if(/claudeusercontent|claude\.ai/.test(location.hostname))o.push("WARNING: running inside Claude environment; external requests may be blocked");
+ try{const r=await fetch(SUPABASE_URL+"/auth/v1/health",{headers:{apikey:SUPABASE_KEY}});o.push("health check: HTTP "+r.status+" "+(await r.text()).slice(0,200))}catch(e){o.push("health check FAILED: "+e.name+": "+e.message)}
+ $("#dg").textContent=o.join("\n")}
+// ---------- الدخول والتسجيل ----------
+const PHONE_COUNTRIES=[
+ ['+1','🇺🇸 الولايات المتحدة / كندا'],['+967','🇾🇪 اليمن'],['+966','🇸🇦 السعودية'],['+971','🇦🇪 الإمارات'],['+973','🇧🇭 البحرين'],['+974','🇶🇦 قطر'],['+965','🇰🇼 الكويت'],['+968','🇴🇲 عُمان'],['+20','🇪🇬 مصر'],['+962','🇯🇴 الأردن'],['+964','🇮🇶 العراق'],['+90','🇹🇷 تركيا'],['+44','🇬🇧 بريطانيا'],['+33','🇫🇷 فرنسا'],['+49','🇩🇪 ألمانيا'],['+61','🇦🇺 أستراليا'],['+81','🇯🇵 اليابان']
+];
+const countryOpts=PHONE_COUNTRIES.map(x=>`<option value="${x[0]}">${x[1]} (${x[0]})</option>`).join('');
+function e164(code,raw){let n=String(raw||'').replace(/\D/g,'');if(n.startsWith('0'))n=n.slice(1);return code+n}
+function authV(mode){
+ if(mode==='phoneotp')return phoneLoginV();
+ const t={in:'تسجيل الدخول',forgot:'استعادة كلمة المرور'}[mode];
+ app.innerHTML=`<div class="box card"><h2>مجموعة آل عامر شجاع</h2><h2>${t}</h2><div class="f"><div><label>البريد الإلكتروني</label><input id="e" type="email" autocomplete="username"></div>
+ ${mode==='in'?`<div><label>كلمة المرور</label><input id="p" type="password" autocomplete="current-password"></div>`:''}</div>
+ <button id="go">${mode==='in'?'دخول':'إرسال رابط الاستعادة'}</button> ${APP_SETTINGS.otp_enabled?`<button type="button" class="g" id="ph">📱 ${mode==='in'?'الدخول برقم الجوال':'الدخول بالجوال'}</button>`:""}<p id="msg"></p>
+ <p class="mu">${mode==='in'?`<button type="button" class="lk" id="l1">نسيت كلمة المرور؟</button> | <button type="button" class="lk" id="l2">تسجيل مساهم جديد</button>`:`<button type="button" class="lk" id="l1">رجوع</button>`}</p>${DG}</div>`;
+ $("#dgb").onclick=diag;
+ $("#l1").onclick=()=>authV(mode==='in'?'forgot':'in');if($("#l2"))$("#l2").onclick=()=>regV();
+ if($("#ph"))$("#ph").onclick=()=>phoneLoginV();
+ $("#go").onclick=async()=>{const em=$("#e").value.trim();if(!em)return msg('اكتب البريد',1);$("#go").disabled=true;
+  if(mode==='in'){const{error}=await sb.auth.signInWithPassword({email:em,password:$("#p").value});if(error){$("#go").disabled=false;return msg('بيانات الدخول غير صحيحة أو الحساب غير مؤكد',1)}route()}
+  else{const{error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});$("#go").disabled=false;msg(error?'تعذر الإرسال':'إذا كان البريد مسجلًا ستصلك رسالة',!!error)}}}
+function phoneLoginV(){
+ app.innerHTML=`<div class="box card"><h2>مجموعة آل عامر شجاع</h2><h2>📱 الدخول برقم الجوال</h2><p class="mu">سيصلك رمز تحقق OTP برسالة SMS.</p><div class="f"><div><label>الدولة</label><select id="pc">${countryOpts}</select></div><div><label>رقم الجوال</label><input id="pn" inputmode="tel" autocomplete="tel" placeholder="مثال: 501234567"></div></div><button id="go">إرسال رمز التحقق</button> <button type="button" class="g" id="bk">الدخول بالإيميل</button><p id="msg"></p>${DG}</div>`;
+ $("#dgb").onclick=diag;$("#bk").onclick=()=>authV('in');
+ $("#go").onclick=async()=>{const phone=e164($("#pc").value,$("#pn").value);if(phone.length<8)return msg('أدخل رقم جوال صحيحًا',1);$("#go").disabled=true;
+  const{error}=await sb.auth.signInWithOtp({phone,options:{shouldCreateUser:false}});
+  if(error){$("#go").disabled=false;return msg('تعذر إرسال الرمز: '+errText(error),1)}
+  phoneVerifyV(phone,'login');
+ };
+}
+function phoneVerifyV(phone,kind,reg){
+ app.innerHTML=`<div class="box card"><h2>التحقق من رقم الجوال</h2><p>أرسلنا رمز تحقق إلى <b dir="ltr">${esc(phone)}</b>.</p><div><label>رمز OTP</label><input id="otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456"></div><br><button id="go">تحقق ودخول</button> <button type="button" class="g" id="bk">رجوع</button><p id="msg"></p>${DG}</div>`;
+ $("#dgb").onclick=diag;$("#bk").onclick=()=>kind==='register'?regV():phoneLoginV();
+ $("#go").onclick=async()=>{const token=$("#otp").value.trim();if(!/^\d{6}$/.test(token))return msg('اكتب رمز OTP المكون من 6 أرقام',1);$("#go").disabled=true;
+  const{data,error}=await sb.auth.verifyOtp({phone,token,type:'sms'});
+  if(error){$("#go").disabled=false;return msg('الرمز غير صحيح أو منتهي: '+errText(error),1)}
+  if(kind==='register'&&reg){
+    // signInWithOtp creates the Auth user; metadata is attached during the OTP request.
+    // The database trigger/registration flow should create the shareholder record from user metadata.
+    app.innerHTML=`<div class="box card"><h2>تم التحقق من رقم الجوال ✅</h2><p>تم إنشاء حسابك واستلام بيانات التسجيل. طلبك الآن بانتظار موافقة الإدارة.</p><button id="b">متابعة</button></div>`;$("#b").onclick=()=>route();
+  }else route();
+ };
+}
+function regV(){
+ app.innerHTML=`<div class="box card" style="max-width:700px"><h2>تسجيل مساهم جديد</h2><p class="mu">اختر طريقة إنشاء الحساب. رقم الجوال يمكن استخدامه لاحقًا للدخول عبر OTP.</p><div class="f"><div><label>طريقة الحساب</label><select id="am"><option value="email">📧 البريد الإلكتروني + كلمة المرور</option>${APP_SETTINGS.otp_enabled?`<option value="phone">📱 رقم الجوال + OTP</option>`:""}</select></div></div><form id="rf"><div class="f">
+ <div><label>الاسم الكامل</label><input name="n" required></div><div><label>رقم الهوية</label><input name="i" required></div>
+ <div><label>الدولة</label><select name="cc">${countryOpts}</select></div><div><label>الهاتف</label><input name="p" inputmode="tel" autocomplete="tel" placeholder="مثال: 501234567" required></div>
+ <div><label>الدولة محل الإقامة</label><select name="res" required><option value="">اختر الدولة</option>${['اليمن','السعودية','الولايات المتحدة','الإمارات','قطر','الكويت','عُمان','البحرين','مصر','الأردن','العراق','تركيا','بريطانيا','فرنسا','ألمانيا','أستراليا','كندا','أخرى'].map(x=>`<option>${x}</option>`).join('')}</select></div>
+ <div><label>المدينة</label><input name="c"></div><div><label>عدد الأسهم التأسيسية</label><input name="s" type="number" min="${Number(APP_SETTINGS.min_shares||1)}" step="1" required></div>
+ <div><label>خطة السداد</label><select name="f">${Object.entries(FR).map(([k,v])=>`<option value="${k}" ${k==='MONTHLY'?'selected':''}>${v}</option>`).join('')}</select></div>
+ <div id="emailBox"><label>البريد الإلكتروني</label><input name="e" type="email" autocomplete="email"></div><div id="passBox"><label>كلمة المرور (8 أحرف فأكثر)</label><input name="w" type="password" minlength="8" autocomplete="new-password"></div></div>
+ <label><input type="checkbox" name="m" style="width:auto"> المساهم قاصر</label><div class="f"><div><label>اسم الولي</label><input name="gn"></div><div><label>هوية الولي</label><input name="gi"></div><div><label>هاتف الولي</label><input name="gp"></div><div><label>صلة الولي</label><input name="gr"></div></div>
+ <label class="mu"><input type="checkbox" name="a" required style="width:auto"> ${esc(APP_SETTINGS.ack_text||DEFAULT_SETTINGS.ack_text)}</label><br><br>
+ <button id="go">إرسال الطلب</button> <button type="button" class="g" id="bk">رجوع</button><p id="msg"></p>${DG}</form></div>`;
+ $("#dgb").onclick=diag;$("#bk").onclick=()=>authV('in');
+ const sync=()=>{const phone=$("#am").value==='phone';$("#emailBox").style.display=phone?'none':'';$("#passBox").style.display=phone?'none':'';$("#rf").e.required=!phone;$("#rf").w.required=!phone};
+ $("#am").onchange=sync;sync();
+ $("#rf").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,mi=f.m.checked;if(mi&&!f.gn.value.trim())return msg('اسم الولي مطلوب للقاصر',1);
+  const phone=e164(f.cc.value,f.p.value);if(phone.length<8)return msg('رقم الجوال غير صحيح',1);
+  const reg={full_name:f.n.value.trim(),id_number:f.i.value.trim(),phone,city:f.c.value.trim(),residence_country:f.res.value,is_minor:mi,guardian_name:f.gn.value.trim(),guardian_id:f.gi.value.trim(),guardian_phone:f.gp.value.trim(),guardian_relation:f.gr.value.trim(),shares:String(parseInt(f.s.value)||0),frequency:f.f.value};
+  $("#go").disabled=true;
+  if($("#am").value==='phone'){
+    const{error}=await sb.auth.signInWithOtp({phone,options:{shouldCreateUser:true,data:{full_name:reg.full_name,reg}}});
+    if(error){$("#go").disabled=false;return msg('تعذر إرسال رمز OTP: '+errText(error),1)}
+    return phoneVerifyV(phone,'register',reg);
+  }
+  let error;try{({error}=await sb.auth.signUp({email:f.e.value.trim(),password:f.w.value,options:{data:{full_name:reg.full_name,reg},emailRedirectTo:location.origin+location.pathname}}))}catch(x){error=x}
+  if(error){$("#go").disabled=false;return msg('الخطأ الفعلي: '+errText(error)+(/database/i.test(error.message)?'\nالسبب المحتمل: رقم الهوية أو الهاتف مسجل مسبقًا أو خطأ في المشغّل':''),1)}
+  app.innerHTML=`<div class="box card"><h2>تم استلام طلبك</h2><p>حالة الطلب: <b>بانتظار موافقة الإدارة</b>. إذا وصلتك رسالة تأكيد على بريدك فافتح الرابط فيها، ثم سجّل الدخول.</p><button id="b">تسجيل الدخول</button></div>`;$("#b").onclick=()=>authV('in')}
+}
+function resetV(){
+ app.innerHTML=`<div class="box card"><h2>كلمة مرور جديدة</h2><div class="f"><div><label>كلمة المرور الجديدة</label><input id="p" type="password" minlength="8"></div></div><button id="go">حفظ</button><p id="msg"></p></div>`;
+ $("#go").onclick=async()=>{const p=$("#p").value;if(p.length<8)return msg("8 أحرف على الأقل",1);const{error}=await sb.auth.updateUser({password:p});if(error)return msg("تعذر الحفظ",1);recovery=false;route()}}
+async function route(){
+ if(!sb)return app.innerHTML=`<div class="box bad">تعذر تحميل مكتبة Supabase من الإنترنت. تأكد من الاتصال ثم حدّث الصفحة.</div>`;
+ if(recovery)return resetV();
+ await loadSettings();
+ const{data:{session},error:sessionError}=await sb.auth.getSession();
+ if(sessionError)return app.innerHTML=`<div class="box bad">تعذر قراءة جلسة الدخول: ${esc(sessionError.message)}</div>`;
+ if(!session)return location.hash==="#/register"?regV():authV("in");
+ const{data:secureRole,error:roleError}=await sb.rpc("my_role");
+ if(roleError){app.innerHTML=`<div class="box bad"><h2>تعذر التحقق من صلاحية الحساب</h2><pre>${esc(errText(roleError))}</pre><button class="g" id="retry">إعادة المحاولة</button> <button class="g" id="logout2">خروج</button></div>`;$("#retry").onclick=route;$("#logout2").onclick=async()=>{await sb.auth.signOut();prof=null;authV("in")};return}
+ const{data:p}=await sb.from("profiles").select("*").eq("user_id",session.user.id).maybeSingle();
+ const role=secureRole||p?.role||"SHAREHOLDER";
+ prof={...(p||{}),role,full_name:p?.full_name||session.user.email,user_id:session.user.id};
+ const own=await sb.from("shareholders").select("id,status").eq("user_id",session.user.id).limit(1);hasOwnShare=!!(own.data||[]).length;
+ if(!STAFF.includes(role))panelMode="shareholder";else if(panelMode!=="shareholder"&&panelMode!=="staff")panelMode="staff";
+ renderShell(session);
+}
+function renderShell(session){
+ const canSwitch=STAFF.includes(prof.role)&&hasOwnShare;
+ app.innerHTML=`<div class="top box"><div><b>${esc(prof.full_name||session.user.email)}</b> <span class="mu">(${esc(roleLabel(prof.role))})</span></div><div class="actions">${canSwitch?`<button class="g" id="mode">${panelMode==="staff"?"حسابي كمساهم":"لوحة الإدارة"}</button>`:""}<button class="g" id="cp">تغيير كلمة المرور</button><button class="g" id="lo">خروج</button></div></div><div id="c"></div>`;
+ $("#lo").onclick=async()=>{await sb.auth.signOut();prof=null;panelMode=null;authV("in")};$("#cp").onclick=()=>{recovery=true;resetV()};
+ if($("#mode"))$("#mode").onclick=()=>{panelMode=panelMode==="staff"?"shareholder":"staff";renderShell(session)};
+ panelMode==="staff"&&STAFF.includes(prof.role)?staffV():shV();
+}
+// ---------- لوحة المساهم (بياناته فقط بحماية RLS) ----------
+async function shV(){
+ const c=$("#c"),{data:{session}}=await sb.auth.getSession(),uid=session?.user?.id;if(!uid)return authV("in");
+ const qr=await sb.from("shareholders").select("*").eq("user_id",uid).limit(1);if(qr.error)return c.innerHTML=`<div class="box bad">تعذر قراءة سجل المساهم: ${esc(errText(qr.error))}</div>`;
+ const s=(qr.data||[])[0];if(!s)return c.innerHTML=`<div class="box">لا يوجد سجل مساهم مرتبط بهذا الحساب.</div>`;
+ const [cr,sch,py,hist,reqs]=await Promise.all([
+  sb.from("commitments").select("*").eq("shareholder_id",s.id).order("created_at").limit(1),
+  sb.from("v_schedule").select("*").order("seq"),
+  sb.from("payments").select("*").eq("shareholder_id",s.id).order("created_at",{ascending:false}),
+  sb.from("share_changes").select("*").eq("shareholder_id",s.id).order("created_at"),
+  sb.from("member_requests").select("*").eq("shareholder_id",s.id).order("created_at",{ascending:false}).limit(50)
+ ]);
+ const cm=(cr.data||[])[0]||{},schedule=(sch.data||[]).filter(x=>!cm.id||x.commitment_id===cm.id),payments=py.data||[],history=hist.error?[]:(hist.data||[]),requests=reqs.error?[]:(reqs.data||[]);
+ const approved=payments.filter(x=>x.status==="APPROVED"),approvedPaid=nsum(approved,"amount"),projectExpected=nsum(schedule,"amount_due"),projectRemaining=nsum(schedule,"remaining"),mo=today().slice(0,7),current=schedule.find(x=>monthKey(x.due_date)===mo)||schedule.find(x=>schedState(x)!=="PAID"),next=schedule.find(x=>schedState(x)!=="PAID");
+ const initial=Number(cm.initial_shares||history.find(x=>x.change_type==="INITIAL")?.shares_after||cm.shares||0),added=history.filter(x=>x.change_type==="INCREASE").reduce((a,x)=>a+Number(x.shares_delta||0),0),reduced=Math.abs(history.filter(x=>x.change_type==="REDUCTION").reduce((a,x)=>a+Number(x.shares_delta||0),0)),currentShares=Number(cm.shares||initial+added-reduced);
+ const currentDue=Number(current?.amount_due||0),currentPaid=Number(current?.amount_paid||0),currentRemaining=Number(current?.remaining||0),monthly=currentShares*Number(cm.share_price||APP_SETTINGS.share_price||10);
+ const card=(b,t)=>`<div class="box st"><b>${b}</b><span>${t}</span></div>`;
+ c.innerHTML=`<h2>مرحبًا ${esc(s.full_name)}</h2><div class="mu">رقم المساهم: <b>${esc(s.member_no||"-")}</b> | الحالة: <b>${esc(ST[s.status]||s.status)}</b>${s.notes?` | ملاحظة: ${esc(s.notes)}`:""}</div>
+ <div class="grid">${card(currentShares,"الأسهم الحالية")}${card(M(monthly),"الالتزام الشهري حسب الأسهم الحالية (ر.س)")}${card(M(projectExpected),"إجمالي الالتزام المتوقع حتى نهاية المشروع")}${card(M(approvedPaid),"إجمالي المدفوع المعتمد")}${card(M(projectRemaining),"إجمالي المتبقي حتى نهاية المشروع")}${card(M(currentDue),"المطلوب للفترة الحالية")}${card(M(currentPaid),"المدفوع للفترة الحالية")}${card(M(currentRemaining),"المتبقي للفترة الحالية")}${card(pct(currentPaid,currentDue)+"%","نسبة سداد الفترة الحالية")}${card(current?stateLabel(schedState(current)):"-","حالة الفترة الحالية")}${card(current?.due_date||"-","تاريخ الاستحقاق الحالي/القادم")}</div>
+ <div class="box"><h2>ملخص الأسهم</h2><div class="grid">${card(initial,"الأسهم التأسيسية")}${card(added,"الزيادات المعتمدة")}${card(reduced,"التخفيضات المعتمدة")}${card(currentShares,"الإجمالي الحالي")}</div>${history.length?tbl(["التاريخ","النوع","التغيير","قبل","بعد","السبب"],history.map(x=>`<tr><td>${x.change_type==="INITIAL"?esc(cm.start_date||APP_SETTINGS.start_date||String(x.created_at||"").slice(0,10)):String(x.created_at||"").slice(0,10)}</td><td>${esc(CT[x.change_type]||x.change_type)}</td><td>${Number(x.shares_delta)>0?"+":""}${x.shares_delta}</td><td>${x.shares_before}</td><td>${x.shares_after}</td><td>${esc(x.reason||"")}</td></tr>`)):"<p class=\"mu\">لا توجد تغييرات لاحقة على الأسهم.</p>"}</div>
+ ${s.status==="ACTIVE"?`<div class="box"><h2>طلبات تغيير المساهمة</h2><div class="f"><div><label>نوع الطلب</label><select id="rt"><option value="SHARE_INCREASE">زيادة الأسهم</option>${APP_SETTINGS.allow_share_reduction?`<option value="SHARE_REDUCTION">تخفيض الأسهم</option>`:""}${APP_SETTINGS.allow_withdrawal?`<option value="WITHDRAWAL">طلب انسحاب</option>`:""}</select></div><div><label>عدد الأسهم</label><input id="rqShares" type="number" min="1" step="1" placeholder="للزيادة أو التخفيض"></div><div class="wide"><label>ملاحظة</label><textarea id="rqNote" rows="2"></textarea></div></div><button id="rqBtn">إرسال الطلب</button> <span id="rqmsg"></span><p class="mu">التغيير لا ينفذ مباشرة؛ يحتاج موافقة الإدارة. الزيادة أو التخفيض تسري على الفترات القادمة حسب السياسة المعتمدة.</p></div>`:""}
+ ${requests.length?`<div class="box"><h2>طلباتي</h2>${tbl(["رقم الطلب","النوع","الحالة","التاريخ","ملاحظة الإدارة"],requests.map(r=>`<tr><td>${esc(r.request_no||String(r.id).slice(0,8))}</td><td>${esc(RT[r.request_type]||r.request_type)}</td><td>${esc(RS[r.status]||r.status)}</td><td>${String(r.created_at||"").slice(0,10)}</td><td>${esc(r.admin_note||"")}</td></tr>`))}</div>`:""}
+ ${s.status==="ACTIVE"?`<div class="box"><h2>تسجيل دفعة</h2><form id="pf"><div class="f"><div><label>المبلغ (ر.س)</label><input name="amt" type="number" step="0.01" min="0.01" required></div><div><label>تاريخ التحويل</label><input name="dt" type="date" value="${today()}" required></div><div><label>طريقة الدفع</label><input name="mt"></div><div><label>مرجع التحويل</label><input name="rf"></div><div><label>الإيصال (صورة أو PDF حتى 50MB)</label><input name="file" type="file" accept="image/*,application/pdf"></div></div><button id="pb">إرسال للتحقق</button> <span id="paymsg"></span></form></div>`:`<div class="box mu">تسجيل الدفعات يفتح بعد موافقة الإدارة.</div>`}
+ <div class="box"><h2>جدول السداد</h2><div id="scheduleWrap">${scheduleTable(schedule.slice(0,12))}</div>${schedule.length>12?`<button class="g" id="schedToggle" data-full="0">عرض كامل الجدول (${schedule.length} شهر)</button>`:""}</div>
+ <div class="box"><h2>دفعاتي</h2>${tbl(["التاريخ","المبلغ","المرجع","الحالة"],payments.map(x=>`<tr><td>${x.paid_on}</td><td>${M(x.amount)}</td><td>${esc(x.reference||"")}</td><td>${PS[x.status]||x.status}</td></tr>`))}</div>`;
+ if($("#schedToggle"))$("#schedToggle").onclick=()=>{const b=$("#schedToggle"),isFull=b.dataset.full==="1";$("#scheduleWrap").innerHTML=scheduleTable(isFull?schedule.slice(0,12):schedule);b.dataset.full=isFull?"0":"1";b.textContent=isFull?`عرض كامل الجدول (${schedule.length} شهر)`:"عرض أول 12 شهر"};
+ if($("#rqBtn"))$("#rqBtn").onclick=async()=>{const type=$("#rt").value,n=Number($("#rqShares").value||0);if((type==="SHARE_INCREASE"||type==="SHARE_REDUCTION")&&n<1)return setInline("rqmsg","حدد عدد الأسهم",1);const{data:{user}}=await sb.auth.getUser();const payload={shareholder_id:s.id,requested_by:user.id,request_type:type,requested_data:{shares:n,note:$("#rqNote").value.trim()}};const r=await sb.from("member_requests").insert(payload);if(r.error)return setInline("rqmsg","تعذر إرسال الطلب: "+r.error.message,1);setInline("rqmsg","تم إرسال الطلب للإدارة",0);setTimeout(shV,600)};
+ if($("#pf"))$("#pf").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,amt=Number(f.amt.value);if(!(amt>0)||!cm.id)return setInline("paymsg","أدخل مبلغًا صحيحًا",1);$("#pb").disabled=true;let path=null,file=f.file.files[0];if(file){if(file.size>50e6||!/^(image\/|application\/pdf)/.test(file.type)){$("#pb").disabled=false;return setInline("paymsg","الإيصال يجب أن يكون صورة أو PDF وحجمه لا يتجاوز 50MB",1)}file=await compressReceipt(file);path=`${s.id}/${crypto.randomUUID()}.${(file.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").slice(0,5)}`;const u=await sb.storage.from("receipts").upload(path,file,{contentType:file.type});if(u.error){$("#pb").disabled=false;return setInline("paymsg","تعذر رفع الإيصال: "+u.error.message,1)}}const r=await sb.from("payments").insert({shareholder_id:s.id,commitment_id:cm.id,amount:amt,paid_on:f.dt.value,method:f.mt.value,reference:f.rf.value,receipt_path:path,idempotency_key:crypto.randomUUID()});if(r.error){$("#pb").disabled=false;return setInline("paymsg","تعذر حفظ الدفعة: "+r.error.message,1)}setInline("paymsg","تم إرسال الدفعة للتحقق",0);setTimeout(shV,500)};
+}
+// ---------- لوحة الإدارة ----------
+const TB={ov:"نظرة عامة",rq:"طلبات التسجيل",sh:"المساهمون",py:"الدفعات",mr:"طلبات التغيير",rl:"الصلاحيات",rp:"التقارير",nt:"التنبيهات",st:"الإعدادات",au:"سجل التدقيق"};
+function staffV(){
+ const c=$("#c");
+ const hiddenForRole=new Set();
+ if(!isAdm()){hiddenForRole.add("st");hiddenForRole.add("au");hiddenForRole.add("rl")}
+ if(["ACCOUNTANT","VIEWER"].includes(prof?.role)){hiddenForRole.add("rq");hiddenForRole.add("mr")}
+ const tabs=Object.entries(TB).filter(([k])=>!hiddenForRole.has(k));
+ if(!tabs.some(([k])=>k===tab))tab="ov";
+ c.innerHTML=`<nav>${tabs.map(([k,v])=>`<button class="${tab===k?"on":"g"}" data-t="${k}">${v}</button>`).join("")}</nav><div id="t"></div>`;
+ c.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;staffV()});
+ ({ov,rq,sh,py,mr,rl,rp,nt,st,au}[tab]||ov)($("#t"));
+}
+async function adminData(){
+ const [s,c,d,p,r,h]=await Promise.all([sb.from("shareholders").select("*").order("created_at"),sb.from("commitments").select("*").order("created_at"),sb.from("v_schedule").select("*").order("due_date"),sb.from("payments").select("*").order("created_at",{ascending:false}),sb.from("member_requests").select("*").order("created_at",{ascending:false}),sb.from("share_changes").select("*").order("created_at")]);
+ return {shareholders:s.data||[],commitments:c.data||[],schedule:d.data||[],payments:p.data||[],requests:r.error?[]:(r.data||[]),changes:h.error?[]:(h.data||[])};
+}
+async function ov(t){
+ const D=await adminData(),real=officialShareholders(D),realIds=new Set(real.map(x=>x.id)),active=real.filter(x=>x.status==="ACTIVE"),members=real.filter(x=>["ACTIVE","SUSPENDED"].includes(x.status)),activeIds=new Set(active.map(x=>x.id)),activeC=D.commitments.filter(x=>activeIds.has(x.shareholder_id)),commitmentShareholders=new Set(activeC.map(x=>x.shareholder_id)),waitingInitial=active.filter(x=>!commitmentShareholders.has(x.id)).length,activeCids=new Set(activeC.map(x=>x.id)),sched=D.schedule.filter(x=>activeCids.has(x.commitment_id)),pays=D.payments.filter(x=>activeIds.has(x.shareholder_id)),mo=today().slice(0,7),current=sched.filter(x=>monthKey(x.due_date)===mo),late=sched.filter(x=>x.state==="LATE"),currentDue=nsum(current,"amount_due"),currentPaid=nsum(current,"amount_paid"),currentRem=nsum(current,"remaining"),projectExpected=nsum(sched,"amount_due"),projectRemaining=nsum(sched,"remaining"),approvedPaid=nsum(pays.filter(x=>x.status==="APPROVED"),"amount"),cashThisMonth=nsum(pays.filter(x=>x.status==="APPROVED"&&monthKey(x.paid_on)===mo),"amount"),shares=activeC.reduce((a,x)=>a+Number(x.shares||0),0),currentMonthly=activeC.reduce((a,x)=>a+Number(x.shares||0)*Number(x.share_price||APP_SETTINGS.share_price||10),0),pendingReq=D.requests.filter(x=>realIds.has(x.shareholder_id)&&["PENDING","UNDER_REVIEW","CHANGES_REQUESTED"].includes(x.status)).length;
+ const cd=(x,y)=>`<div class="box st"><b>${x}</b><span>${y}</span></div>`;
+ t.innerHTML=`<div class="grid">${cd(members.length,"إجمالي المساهمين")}${cd(active.length,"المساهمون الفعّالون")}${cd(real.filter(x=>x.status==="PENDING").length,"طلبات تسجيل بانتظار الموافقة")}${cd(waitingInitial,"بانتظار تحديد الأسهم")}${cd(D.payments.filter(x=>realIds.has(x.shareholder_id)&&x.status==="PENDING").length,"دفعات بانتظار التحقق")}${cd(pendingReq,"طلبات تغيير بانتظار الإجراء")}${cd(shares,"الأسهم الحالية")}${cd(M(currentMonthly),"الالتزام الشهري حسب الأسهم الحالية")}${cd(M(projectExpected),"إجمالي الالتزام المتوقع حتى نهاية المشروع")}${cd(M(approvedPaid),"إجمالي المدفوع المعتمد")}${cd(M(projectRemaining),"إجمالي المتبقي حتى نهاية المشروع")}${cd(M(currentDue),"المطلوب هذا الشهر")}${cd(M(currentPaid),"المغطى من استحقاق هذا الشهر")}${cd(M(currentRem),"المتبقي لهذا الشهر")}${cd(pct(currentPaid,currentDue)+"%","نسبة تغطية هذا الشهر")}${cd(M(cashThisMonth),"التحصيل النقدي هذا الشهر")}${cd(M(nsum(late,"remaining")),"المبالغ المتأخرة")}${cd(new Set(late.map(x=>x.commitment_id)).size,"مساهمون متأخرون")}</div><p class="mu">السجلات التجريبية مستبعدة تلقائيًا من هذه الأرقام.</p>`;
+}
+async function setSh(id,status){const allowed=["ACTIVE","REJECTED","CHANGES_REQUESTED"];if(!allowed.includes(status))return;let note=null;if(status==="CHANGES_REQUESTED"){note=prompt("ما التعديل المطلوب؟");if(!note)return}const r=await sb.from("shareholders").update(note?{status,notes:note}:{status,notes:null}).eq("id",id);if(r.error)return alert("تعذر التنفيذ: "+errText(r.error));staffV()}
+async function rq(t){const{data,error}=await sb.from("shareholders").select("*,commitments(shares,share_price,total,frequency)").in("status",["PENDING","CHANGES_REQUESTED"]).order("created_at");if(error)return t.innerHTML=`<div class="box bad">${esc(error.message)}</div>`;t.innerHTML=`<div class="box"><h2>طلبات التسجيل</h2>${tbl(["الاسم","رقم المساهم","الهاتف","الهوية","الأسهم","الالتزام الشهري","التاريخ","إجراء"],(data||[]).map(s=>{const c=s.commitments?.[0]||{};return `<tr><td>${esc(s.full_name)}</td><td>${esc(s.member_no||"-")}</td><td>${esc(s.phone)}</td><td>${esc(s.id_number)}</td><td>${c.shares??"-"}</td><td>${M(Number(c.shares||0)*Number(c.share_price||APP_SETTINGS.share_price||10))}</td><td>${String(s.created_at||"").slice(0,10)}</td><td>${canP()?`<button data-a="ACTIVE" data-i="${s.id}">موافقة</button> <button class="g" data-a="REJECTED" data-i="${s.id}">رفض</button> <button class="g" data-a="CHANGES_REQUESTED" data-i="${s.id}">طلب تعديل</button>`:"-"}</td></tr>`}))}</div>`;t.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>setSh(b.dataset.i,b.dataset.a))}
+async function sh(t){
+ const D=await adminData(),cMap={};D.commitments.forEach(x=>{if(!cMap[x.shareholder_id])cMap[x.shareholder_id]=x});const schMap={};D.schedule.forEach(x=>(schMap[x.commitment_id]??=[]).push(x));const pMap={};D.payments.filter(x=>x.status==="APPROVED").forEach(x=>pMap[x.shareholder_id]=(pMap[x.shareholder_id]||0)+Number(x.amount||0));
+ t.innerHTML=`<div class="box"><h2>جميع المساهمين</h2><p class="mu">اضغط على اسم المساهم لفتح ملفه الكامل وإدارة الأسهم والدفعات حسب صلاحيتك. السجل التجريبي يظهر هنا للاختبارات فقط ولا يدخل في الأرقام الرسمية.</p><input id="q" placeholder="بحث بالاسم أو رقم المساهم أو الهاتف أو الهوية"><div id="tt"></div></div>`;
+ const draw=()=>{const q=$("#q").value.trim(),searchValues=s=>isViewer()?[s.full_name,s.member_no]:[s.full_name,s.member_no,s.phone,s.id_number];$("#tt").innerHTML=tbl(["رقم","الاسم","الحالة","الحساب الإلكتروني","الأسهم","شهري","المدفوع","متبقي المشروع"],D.shareholders.filter(s=>!q||searchValues(s).some(v=>String(v||"").includes(q))).map(s=>{const cm=cMap[s.id]||{},sc=schMap[cm.id]||[],remaining=nsum(sc,"remaining"),baseState=cm.id?(ST[s.status]||s.status):"بانتظار تحديد الأسهم",state=s.is_test?`🧪 تجريبي — ${baseState}`:baseState,acct=s.user_id?"مفعّل":"غير مفعّل",name=`${s.is_test?'<span class="pill">🧪 تجريبي</span> ':''}${esc(s.full_name)}`;return `<tr><td>${esc(s.member_no||"-")}</td><td><button class="lk" data-prof="${s.id}">${name}</button></td><td>${state}</td><td>${acct}</td><td>${cm.shares??"-"}</td><td>${M(Number(cm.shares||0)*Number(cm.share_price||APP_SETTINGS.share_price||10))}</td><td>${M(pMap[s.id]||0)}</td><td>${M(remaining)}</td></tr>`}));$("#tt").querySelectorAll("[data-prof]").forEach(b=>b.onclick=()=>shareholderProfile(t,b.dataset.prof))};
+ draw();$("#q").oninput=draw
+}
+
+async function shareholderProfile(t,shareholderId){
+ const D=await adminData(),s=D.shareholders.find(x=>x.id===shareholderId);if(!s)return t.innerHTML=`<div class="box bad">تعذر العثور على المساهم.</div>`;
+ const cm=D.commitments.find(x=>x.shareholder_id===s.id)||null,schedule=cm?D.schedule.filter(x=>x.commitment_id===cm.id):[],payments=D.payments.filter(x=>x.shareholder_id===s.id),history=D.changes.filter(x=>x.shareholder_id===s.id),requests=D.requests.filter(x=>x.shareholder_id===s.id);
+ const approved=payments.filter(x=>x.status==="APPROVED"),approvedPaid=nsum(approved,"amount"),projectExpected=nsum(schedule,"amount_due"),projectRemaining=nsum(schedule,"remaining"),initial=Number(cm?.initial_shares||history.find(x=>x.change_type==="INITIAL")?.shares_after||cm?.shares||0),currentShares=Number(cm?.shares||0),monthly=currentShares*Number(cm?.share_price||APP_SETTINGS.share_price||10),mo=today().slice(0,7),current=schedule.find(x=>monthKey(x.due_date)===mo)||schedule.find(x=>schedState(x)!=="PAID"),card=(b,l)=>`<div class="box st"><b>${b}</b><span>${l}</span></div>`;
+ const accountState=s.user_id?"مفعّل إلكترونيًا":"غير مفعّل إلكترونيًا";
+ t.innerHTML=`<div class="box"><div class="top"><div><h2 style="margin:0">${s.is_test?`<span class="pill">🧪 تجريبي</span> `:""}${esc(s.full_name)}</h2><div class="mu">رقم المساهم: <b>${esc(s.member_no||"-")}</b> · ${esc(accountState)}</div></div><button class="g" id="backMembers">← رجوع للمساهمين</button></div></div>
+ <div class="grid">${card(cm?currentShares:"-","الأسهم الحالية")}${card(cm?M(initial):"-","الأسهم التأسيسية")}${card(cm?M(monthly):"0","الالتزام الشهري (ر.س)")}${card(M(approvedPaid),"المدفوع المعتمد")}${card(cm?M(projectExpected):"0","إجمالي المشروع")}${card(cm?M(projectRemaining):"0","المتبقي")}${card(current?M(current.remaining):"-","المتبقي للفترة الحالية")}${card(current?stateLabel(schedState(current)):"-","حالة الفترة الحالية")}</div>
+ <div class="box"><h2>بيانات المساهم</h2><div class="f"><div><label>الحالة</label><div>${esc(cm?ST[s.status]||s.status:"بانتظار تحديد الأسهم")}</div></div><div><label>الجوال</label><div>${esc(isViewer()?maskedPhone(s.phone):(s.phone||"-"))}</div></div><div><label>البريد</label><div>${esc(isViewer()?maskedEmail(s.email):(s.email||"-"))}</div></div><div><label>الهوية</label><div>${esc(isViewer()?maskedId(s.id_number):(s.id_number||"-"))}</div></div><div><label>الدولة</label><div>${esc(s.country||"-")}</div></div><div><label>المدينة</label><div>${esc(s.city||"-")}</div></div></div>${isViewer()?`<p class="mu">تم تمويه الجوال والبريد والهوية لصلاحية المشاهد حفاظًا على الخصوصية.</p>`:""}</div>
+ ${!cm&&canInit()?`<div class="box"><h2>تهيئة المساهمة لأول مرة</h2><p class="mu">هذا الإجراء يحدد الأسهم التأسيسية ويُنشئ الالتزام وجدول السداد. لا يمكن استخدامه مرة ثانية لنفس المساهم.</p><form id="initShares"><div class="f"><div><label>عدد الأسهم التأسيسية</label><input name="shares" type="number" min="1" step="1" required></div><div><label>خطة السداد</label><select name="frequency"><option value="MONTHLY">شهري</option><option value="QUARTERLY">ربع سنوي</option><option value="SEMIANNUAL">نصف سنوي</option><option value="ANNUAL">سنوي</option><option value="FULL">دفعة كاملة</option></select></div></div><button>تحديد الأسهم وإنشاء الجدول</button> <span id="initMsg"></span></form></div>`:!cm?`<div class="box mu">بانتظار تحديد الأسهم التأسيسية من الإدارة المخولة.</div>`:""}
+ ${cm&&canShareChange()?`<div class="box"><h2>إدارة الأسهم</h2><p class="mu">الحالي: <b>${currentShares}</b> سهم · التأسيسي: <b>${initial}</b> سهم. التغيير يطبق على الفترات القادمة فقط، ويحفظ في سجل الأسهم والتدقيق.</p><form id="shareChange"><div class="f"><div><label>نوع التغيير</label><select name="action" required><option value="INCREASE" ${APP_SETTINGS.allow_share_increase===false?"disabled":""}>زيادة أسهم</option><option value="REDUCTION" ${APP_SETTINGS.allow_share_reduction===false?"disabled":""}>تنقيص أسهم</option></select></div><div><label>عدد الأسهم</label><input name="shares" type="number" min="1" step="1" required></div><div class="wide"><label>سبب / ملاحظة</label><input name="reason" placeholder="مثال: طلب المساهم زيادة سهمين"></div></div><button>تنفيذ تغيير الأسهم</button> <span id="shareChangeMsg"></span></form></div>`:""}
+ ${cm&&canPay()?`<div class="box"><h2>إضافة دفعة معتمدة</h2><form id="profilePay"><div class="f"><div><label>المبلغ</label><input name="amt" type="number" min="0.01" step="0.01" required></div><div><label>التاريخ</label><input name="dt" type="date" value="${today()}" required></div><div><label>الطريقة</label><input name="mt"></div><div><label>المرجع</label><input name="rf"></div><div><label>سند / إيصال الحوالة (صورة أو PDF حتى 50MB)</label><input name="file" type="file" accept="image/*,application/pdf"></div></div><button>حفظ الدفعة</button> <span id="profilePayMsg"></span></form></div>`:""}
+ ${cm?`<div class="box"><h2>سجل الأسهم</h2>${history.length?tbl(["التاريخ","النوع","التغيير","قبل","بعد","السبب"],history.map(x=>`<tr><td>${x.change_type==="INITIAL"?esc(cm.start_date||APP_SETTINGS.start_date||String(x.created_at||"").slice(0,10)):String(x.created_at||"").slice(0,10)}</td><td>${esc(CT[x.change_type]||x.change_type)}</td><td>${Number(x.shares_delta)>0?"+":""}${x.shares_delta}</td><td>${x.shares_before}</td><td>${x.shares_after}</td><td>${esc(x.reason||"")}</td></tr>`)):`<p class="mu">لا يوجد سجل تغييرات.</p>`}</div>
+ <div class="box"><h2>جدول السداد</h2><div id="profileSchedule">${scheduleTable(schedule.slice(0,12))}</div>${schedule.length>12?`<button class="g" id="profileSchedToggle" data-full="0">عرض كامل الجدول (${schedule.length} شهر)</button>`:""}</div>`:""}
+ <div class="box"><h2>الدفعات</h2>${tbl(["التاريخ","المبلغ","الطريقة","المرجع","السند","الحالة"],payments.map(p=>`<tr><td>${esc(p.paid_on||"")}</td><td>${M(p.amount)}</td><td>${esc(p.method||"")}</td><td>${esc(p.reference||"")}</td><td>${p.receipt_path?`<button class="g mini" data-prof-receipt="${esc(p.receipt_path)}">فتح السند</button>`:"-"}</td><td>${esc(PS[p.status]||p.status)}${p.void_reason?` (${esc(p.void_reason)})`:""}</td></tr>`))}</div>
+ ${requests.length?`<div class="box"><h2>طلبات تغيير المساهمة</h2>${tbl(["رقم الطلب","النوع","الحالة","التاريخ","ملاحظة الإدارة"],requests.map(r=>`<tr><td>${esc(r.request_no||String(r.id).slice(0,8))}</td><td>${esc(RT[r.request_type]||r.request_type)}</td><td>${esc(RS[r.status]||r.status)}</td><td>${String(r.created_at||"").slice(0,10)}</td><td>${esc(r.admin_note||"")}</td></tr>`))}</div>`:""}`;
+ $("#backMembers").onclick=()=>sh(t);
+ if($("#initShares"))$("#initShares").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,n=parseInt(f.shares.value,10);if(!(n>0))return setInline("initMsg","أدخل عدد أسهم صحيحًا",1);if(!confirm(`تحديد ${n} سهم تأسيسي للمساهم ${s.full_name}؟`))return;const r=await sb.rpc("staff_initialize_shareholder",{p_shareholder_id:s.id,p_shares:n,p_frequency:f.frequency.value});if(r.error)return setInline("initMsg","تعذر التهيئة: "+r.error.message,1);setInline("initMsg","تم تحديد الأسهم وإنشاء جدول السداد",0);setTimeout(()=>shareholderProfile(t,s.id),500)};
+ if($("#shareChange"))$("#shareChange").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,n=parseInt(f.shares.value,10),action=f.action.value;if(!(n>0))return setInline("shareChangeMsg","أدخل عدد أسهم صحيحًا",1);const label=action==="INCREASE"?"زيادة":"تنقيص";if(!confirm(`${label} ${n} سهم للمساهم ${s.full_name}؟`))return;const r=await sb.rpc("staff_change_shares",{p_shareholder_id:s.id,p_action:action,p_shares:n,p_reason:f.reason.value||""});if(r.error)return setInline("shareChangeMsg","تعذر تغيير الأسهم: "+r.error.message,1);setInline("shareChangeMsg","تم تغيير الأسهم وتحديث الفترات القادمة",0);setTimeout(()=>shareholderProfile(t,s.id),500)};
+ if($("#profilePay"))$("#profilePay").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,amt=Number(f.amt.value);if(!(amt>0))return setInline("profilePayMsg","أدخل مبلغًا صحيحًا",1);const up=await uploadReceiptFile(f.file?.files?.[0],s.id);if(up.error)return setInline("profilePayMsg",up.error,1);const{data:{user}}=await sb.auth.getUser();const r=await sb.from("payments").insert({shareholder_id:s.id,commitment_id:cm.id,amount:amt,paid_on:f.dt.value,method:f.mt.value,reference:f.rf.value,receipt_path:up.path,status:"APPROVED",reviewed_by:user.id,reviewed_at:new Date().toISOString(),idempotency_key:crypto.randomUUID()});if(r.error)return setInline("profilePayMsg","تعذر حفظ الدفعة: "+r.error.message,1);setInline("profilePayMsg","تمت إضافة الدفعة",0);setTimeout(()=>shareholderProfile(t,s.id),500)};
+ t.querySelectorAll("[data-prof-receipt]").forEach(b=>b.onclick=()=>openReceipt(b.dataset.profReceipt));
+ if($("#profileSchedToggle"))$("#profileSchedToggle").onclick=()=>{const b=$("#profileSchedToggle"),full=b.dataset.full==="1";$("#profileSchedule").innerHTML=scheduleTable(full?schedule.slice(0,12):schedule);b.dataset.full=full?"0":"1";b.textContent=full?`عرض كامل الجدول (${schedule.length} شهر)`:"عرض أول 12 شهر"};
+}
+async function py(t){const D=await adminData(),active=D.shareholders.filter(x=>x.status==="ACTIVE"),cMap={};D.commitments.forEach(x=>{if(!cMap[x.shareholder_id])cMap[x.shareholder_id]=x});const sMap=Object.fromEntries(D.shareholders.map(x=>[x.id,x]));t.innerHTML=`${canPay()?`<div class="box"><h2>إضافة دفعة معتمدة</h2><form id="af"><div class="f"><div><label>المساهم</label><select name="s" required><option value="">اختر</option>${active.filter(s=>cMap[s.id]).map(s=>{const cm=cMap[s.id];return `<option value="${s.id}" data-c="${cm.id}">${s.is_test?"🧪 ":""}${esc(s.member_no||"-")} — ${esc(s.full_name)} — ${cm.shares||0} سهم</option>`}).join("")}</select></div><div><label>المبلغ</label><input name="amt" type="number" step="0.01" min="0.01" required></div><div><label>التاريخ</label><input name="dt" type="date" value="${today()}" required></div><div><label>الطريقة</label><input name="mt"></div><div><label>المرجع</label><input name="rf"></div><div><label>سند / إيصال الحوالة (صورة أو PDF حتى 50MB)</label><input name="file" type="file" accept="image/*,application/pdf"></div></div><button>حفظ</button> <span id="adminPayMsg"></span></form></div>`:""}<div class="box"><h2>الدفعات</h2>${tbl(["التاريخ","المساهم","المبلغ","المرجع","الحالة","إجراء"],D.payments.slice(0,250).map(p=>{const s=sMap[p.shareholder_id]||{};return `<tr><td>${p.paid_on}</td><td>${s.is_test?"🧪 ":""}${esc(s.member_no||"")} ${esc(s.full_name||"")}</td><td>${M(p.amount)}</td><td>${esc(p.reference||"")}</td><td>${PS[p.status]||p.status}${p.void_reason?` (${esc(p.void_reason)})`:""}</td><td>${p.receipt_path?`<button class="g mini" data-r="${esc(p.receipt_path)}">السند</button> `:""}${canPay()&&p.status==="PENDING"?`<button class="mini" data-p="${p.id}" data-s="APPROVED">اعتماد</button> <button class="g mini" data-p="${p.id}" data-s="REJECTED">رفض</button>`:""}${canPay()&&p.status==="APPROVED"?`<button class="g mini" data-p="${p.id}" data-s="VOID">إلغاء</button>`:""}</td></tr>`}) )}</div>`;t.querySelectorAll("[data-p]").forEach(x=>x.onclick=async()=>{const{data:{user}}=await sb.auth.getUser();const up={status:x.dataset.s,reviewed_by:user?.id||null,reviewed_at:new Date().toISOString()};if(up.status==="VOID"){const why=prompt("سبب الإلغاء؟");if(!why)return;up.void_reason=why}const r=await sb.from("payments").update(up).eq("id",x.dataset.p);if(r.error)return alert("تعذر التنفيذ: "+r.error.message);staffV()});t.querySelectorAll("[data-r]").forEach(x=>x.onclick=()=>openReceipt(x.dataset.r));if($("#af"))$("#af").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,o=f.s.selectedOptions[0],amt=Number(f.amt.value);if(!(amt>0))return setInline("adminPayMsg","أدخل مبلغًا صحيحًا",1);const upFile=await uploadReceiptFile(f.file?.files?.[0],f.s.value);if(upFile.error)return setInline("adminPayMsg",upFile.error,1);const{data:{user}}=await sb.auth.getUser();const r=await sb.from("payments").insert({shareholder_id:f.s.value,commitment_id:o.dataset.c,amount:amt,paid_on:f.dt.value,method:f.mt.value,reference:f.rf.value,receipt_path:upFile.path,status:"APPROVED",reviewed_by:user.id,reviewed_at:new Date().toISOString(),idempotency_key:crypto.randomUUID()});if(r.error)return setInline("adminPayMsg","تعذر الحفظ: "+r.error.message,1);setInline("adminPayMsg","تمت إضافة الدفعة",0);setTimeout(staffV,500)}}
+async function mr(t){const D=await adminData(),sMap=Object.fromEntries(D.shareholders.map(x=>[x.id,x]));t.innerHTML=`<div class="box"><h2>طلبات تغيير المساهمة</h2>${tbl(["رقم الطلب","المساهم","النوع","الحالة","التاريخ","التفاصيل","إجراء"],D.requests.map(r=>{const s=sMap[r.shareholder_id]||{};return `<tr><td>${esc(r.request_no||String(r.id).slice(0,8))}</td><td>${esc(s.member_no||"")} ${esc(s.full_name||"")}</td><td>${esc(RT[r.request_type]||r.request_type)}</td><td>${esc(RS[r.status]||r.status)}</td><td>${String(r.created_at||"").slice(0,10)}</td><td><details><summary>عرض</summary><div class="mu" style="margin-top:6px">${requestDetails(r)}</div>${r.admin_note?`<p><b>ملاحظة الإدارة:</b> ${esc(r.admin_note)}</p>`:""}</details></td><td>${canP()&&["PENDING","UNDER_REVIEW","CHANGES_REQUESTED"].includes(r.status)?`<button class="mini" data-ex="${r.id}">تنفيذ/اعتماد</button> <button class="g mini" data-rv="${r.id}" data-st="UNDER_REVIEW">قيد المراجعة</button> <button class="g mini" data-rv="${r.id}" data-st="CHANGES_REQUESTED">طلب تعديل</button> <button class="g mini" data-rv="${r.id}" data-st="REJECTED">رفض</button>`:"-"}</td></tr>`}) )}</div>`;t.querySelectorAll("[data-ex]").forEach(b=>b.onclick=async()=>{const note=prompt("ملاحظة الإدارة (اختياري)")||"";const r=await sb.rpc("admin_apply_member_request",{p_request_id:b.dataset.ex,p_note:note});if(r.error)return alert("تعذر تنفيذ الطلب: "+r.error.message);staffV()});t.querySelectorAll("[data-rv]").forEach(b=>b.onclick=async()=>{let note="";if(b.dataset.st!=="UNDER_REVIEW")note=prompt("ملاحظة الإدارة")||"";const r=await sb.rpc("admin_review_member_request",{p_request_id:b.dataset.rv,p_status:b.dataset.st,p_note:note});if(r.error)return alert("تعذر تحديث الطلب: "+r.error.message);staffV()})}
+async function rl(t){if(!isAdm())return;t.innerHTML=`<div class="box"><h2>إدارة الصلاحيات</h2><p class="mu">هذه الصفحة للحسابات الإلكترونية فقط. المساهم اليدوي بدون حساب دخول لا يظهر هنا حتى يفعّل حسابه ويرتبط برقم مساهمه.</p><div id="rolesBox">جاري التحميل...</div></div>`;const r=await sb.rpc("admin_list_users");if(r.error)return $("#rolesBox").innerHTML=`<div class="bad">${esc(r.error.message)}<br><span class="mu">تعذر قراءة قائمة الحسابات.</span></div>`;const rows=r.data||[];$("#rolesBox").innerHTML=tbl(["الاسم","رقم المساهم","الدور الحالي","تغيير الدور"],rows.map((u,i)=>`<tr><td>${esc(u.full_name||u.email||"-")}</td><td>${esc(u.member_no||"-")}</td><td>${esc(roleLabel(u.role))}</td><td>${u.role==="ADMIN"?`<span class="mu">مدير النظام — محمي</span>`:`<div class="actions"><select id="role_${i}" style="min-width:130px"><option value="SHAREHOLDER">مساهم</option><option value="MANAGER">مدير</option><option value="SUPERVISOR">مشرف</option><option value="ACCOUNTANT">محاسب</option><option value="VIEWER">مشاهد</option></select><button class="mini" data-role-save="${i}" data-u="${u.user_id}">حفظ</button></div>`}</td></tr>`));rows.forEach((u,i)=>{if($("#role_"+i))$("#role_"+i).value=u.role||"VIEWER"});t.querySelectorAll("[data-role-save]").forEach(b=>b.onclick=async()=>{const role=$("#role_"+b.dataset.roleSave).value;if(!confirm(`تغيير صلاحية هذا الحساب إلى ${roleLabel(role)}؟`))return;const x=await sb.rpc("admin_set_staff_role",{p_user_id:b.dataset.u,p_role:role});if(x.error)return alert("تعذر تغيير الصلاحية: "+x.error.message);alert("تم تحديث الصلاحية");rl(t)})}
+async function rp(t){
+ const D=await adminData(),real=officialShareholders(D),realIds=new Set(real.map(x=>x.id)),sMap=Object.fromEntries(real.map(x=>[x.id,x])),cMap={},schMap={},hMap={};
+ D.commitments.filter(x=>realIds.has(x.shareholder_id)).forEach(x=>{if(!cMap[x.shareholder_id])cMap[x.shareholder_id]=x});D.schedule.forEach(x=>(schMap[x.commitment_id]??=[]).push(x));D.changes.filter(x=>realIds.has(x.shareholder_id)).forEach(x=>(hMap[x.shareholder_id]??=[]).push(x));
+ const pMap={};D.payments.filter(x=>x.status==="APPROVED"&&realIds.has(x.shareholder_id)).forEach(x=>pMap[x.shareholder_id]=(pMap[x.shareholder_id]||0)+Number(x.amount||0));
+ if(!canExport()){
+  const active=real.filter(x=>x.status==="ACTIVE");
+  const activeIds=new Set(active.map(x=>x.id));
+  const activeC=D.commitments.filter(x=>activeIds.has(x.shareholder_id));
+  const activeCids=new Set(activeC.map(x=>x.id));
+  const sched=D.schedule.filter(x=>activeCids.has(x.commitment_id));
+  const paid=D.payments.filter(x=>activeIds.has(x.shareholder_id)&&x.status==="APPROVED");
+  const totalShares=activeC.reduce((a,x)=>a+Number(x.shares||0),0);
+  const expected=nsum(sched,"amount_due"),paidTotal=nsum(paid,"amount"),remaining=nsum(sched,"remaining");
+  const cd=(x,y)=>`<div class="box st"><b>${x}</b><span>${y}</span></div>`;
+  t.innerHTML=`<div class="box"><h2>التقارير — عرض فقط</h2><p class="mu">صلاحية المشاهد تسمح بالاطلاع على الملخصات فقط، ولا تسمح بتنزيل أو تصدير ملفات المساهمين أو الدفعات.</p></div><div class="grid">${cd(active.length,"المساهمون الفعّالون")}${cd(totalShares,"الأسهم الحالية")}${cd(M(expected),"إجمالي الالتزام المتوقع")}${cd(M(paidTotal),"إجمالي المدفوع المعتمد")}${cd(M(remaining),"إجمالي المتبقي")}</div>`;
+  return;
+ }
+ t.innerHTML=`<div class="box"><h2>التقارير والتصدير</h2><div class="actions"><button id="exSh">Excel/CSV — المساهمون</button><button id="exPy">Excel/CSV — الدفعات</button><button id="exCh">Excel/CSV — تاريخ الأسهم</button><button class="g" id="printRpt">حفظ / طباعة PDF</button></div><p class="mu">التقارير الرسمية تستبعد السجلات التجريبية تلقائيًا. ملفات CSV تفتح مباشرة في Excel، وPDF يفتح كتقرير مستقل ونظيف.</p></div>`;
+ $("#exSh").onclick=()=>downloadCSV("shareholders.csv",["رقم المساهم","الاسم","الحالة","الأسهم التأسيسية","الزيادات المعتمدة","التخفيضات المعتمدة","الأسهم الحالية","الالتزام الشهري الحالي","إجمالي المشروع","المدفوع المعتمد","المتبقي"],real.map(s=>{const cm=cMap[s.id]||{},sc=schMap[cm.id]||[],hh=hMap[s.id]||[],initial=Number(cm.initial_shares||hh.find(x=>x.change_type==="INITIAL")?.shares_after||cm.shares||0),added=hh.filter(x=>x.change_type==="INCREASE").reduce((a,x)=>a+Number(x.shares_delta||0),0),reduced=Math.abs(hh.filter(x=>x.change_type==="REDUCTION").reduce((a,x)=>a+Number(x.shares_delta||0),0));return[s.member_no,s.full_name,ST[s.status]||s.status,initial,added,reduced,cm.shares,Number(cm.shares||0)*Number(cm.share_price||APP_SETTINGS.share_price||10),nsum(sc,"amount_due"),pMap[s.id]||0,nsum(sc,"remaining")]}));
+ $("#exPy").onclick=()=>downloadCSV("payments.csv",["التاريخ","رقم المساهم","الاسم","المبلغ","طريقة الدفع","المرجع","الحالة"],D.payments.filter(p=>realIds.has(p.shareholder_id)).map(p=>{const s=sMap[p.shareholder_id]||{};return[p.paid_on,s.member_no,s.full_name,p.amount,p.method,p.reference,PS[p.status]||p.status]}));
+ $("#exCh").onclick=()=>downloadCSV("share_changes.csv",["التاريخ","رقم المساهم","الاسم","النوع","التغيير","قبل","بعد","السبب"],D.changes.filter(x=>realIds.has(x.shareholder_id)).map(x=>{const sh=sMap[x.shareholder_id]||{},cm=cMap[x.shareholder_id]||{},dt=x.change_type==="INITIAL"?(cm.start_date||APP_SETTINGS.start_date||String(x.created_at||"").slice(0,10)):String(x.created_at||"").slice(0,10);return[dt,sh.member_no,sh.full_name,CT[x.change_type]||x.change_type,x.shares_delta,x.shares_before,x.shares_after,x.reason]}));
+ $("#printRpt").onclick=()=>printAdminReport(D);
+}
+async function nt(t){
+ const D=await adminData(),real=officialShareholders(D),realIds=new Set(real.map(x=>x.id)),sMap=Object.fromEntries(real.map(x=>[x.id,x])),activeCids=new Set(D.commitments.filter(c=>realIds.has(c.shareholder_id)&&sMap[c.shareholder_id]?.status==="ACTIVE").map(c=>c.id));
+ const pendingRegs=real.filter(x=>x.status==="PENDING"),pendingPays=D.payments.filter(x=>realIds.has(x.shareholder_id)&&x.status==="PENDING"),pendingReqs=D.requests.filter(x=>realIds.has(x.shareholder_id)&&["PENDING","UNDER_REVIEW","CHANGES_REQUESTED"].includes(x.status));
+ const lateFull=D.schedule.filter(x=>activeCids.has(x.commitment_id)&&schedState(x)==="LATE"),latePartial=D.schedule.filter(x=>activeCids.has(x.commitment_id)&&schedState(x)==="PARTIAL_LATE");
+ const hasAny=pendingRegs.length||pendingPays.length||pendingReqs.length||lateFull.length||latePartial.length;
+ t.innerHTML=`<div class="box"><h2>التنبيهات الحالية</h2><p class="mu">السجلات التجريبية مستبعدة من التنبيهات الرسمية.</p>
+ ${pendingRegs.map(x=>`<div class="notice">طلب تسجيل جديد: <b>${esc(x.full_name)}</b> (${esc(x.member_no||"-")})</div>`).join("")}
+ ${pendingPays.map(x=>{const sh=sMap[x.shareholder_id]||{};return `<div class="notice">دفعة بانتظار التحقق: <b>${M(x.amount)} ر.س</b>${sh.full_name?` — ${esc(sh.full_name)}`:""}</div>`}).join("")}
+ ${pendingReqs.map(x=>{const sh=sMap[x.shareholder_id]||{};return `<div class="notice">طلب ${esc(RT[x.request_type]||x.request_type)} بانتظار الإجراء: <b>${esc(x.request_no||"")}</b>${sh.full_name?` — ${esc(sh.full_name)}`:""}</div>`}).join("")}
+ ${latePartial.length?`<div class="notice bad">متأخر جزئيًا: ${new Set(latePartial.map(x=>x.commitment_id)).size} مساهم/التزام، والمتبقي المتأخر ${M(nsum(latePartial,"remaining"))} ر.س.</div>`:""}
+ ${lateFull.length?`<div class="notice bad">متأخر بدون سداد: ${new Set(lateFull.map(x=>x.commitment_id)).size} مساهم/التزام، بإجمالي ${M(nsum(lateFull,"remaining"))} ر.س.</div>`:""}
+ ${!hasAny?`<p class="ok">لا توجد تنبيهات تحتاج إجراء الآن.</p>`:""}
+ </div>`;
+}
+async function st(t){const{data,error}=await sb.from("settings").select("*");if(error)return t.innerHTML=`<div class="box bad">${esc(error.message)}</div>`;const g=k=>(data||[]).find(x=>x.key===k)?.value;t.innerHTML=`<div class="box"><h2>الإعدادات</h2><div class="f"><div><label>قيمة السهم الشهرية (ر.س)</label><input id="s1" type="number" step="0.01" min="0.01" value="${g("share_price")??10}"></div><div><label>مدة المشروع (شهر)</label><input id="s2" type="number" min="1" value="${g("term_months")??60}"></div><div><label>بداية المشروع</label><input id="s3" type="date" value="${g("start_date")??"2026-10-01"}"></div><div><label>الحد الأدنى للأسهم</label><input id="s5" type="number" min="1" value="${g("min_shares")??1}"></div></div><div class="f"><label><input id="ai" type="checkbox" style="width:auto" ${g("allow_share_increase")!==false?"checked":""}> السماح بزيادة الأسهم</label><label><input id="ar" type="checkbox" style="width:auto" ${g("allow_share_reduction")!==false?"checked":""}> السماح بتخفيض الأسهم</label><label><input id="aw" type="checkbox" style="width:auto" ${g("allow_withdrawal")!==false?"checked":""}> السماح بطلب الانسحاب</label><label><input id="ab" type="checkbox" style="width:auto" ${g("allow_reduction_below_initial")===true?"checked":""}> السماح بالتخفيض تحت التأسيسي</label></div><label class="mu">نص الإقرار</label><textarea id="s4" rows="4">${esc(g("ack_text")??DEFAULT_SETTINGS.ack_text)}</textarea><label class="mu">سياسة الانسحاب</label><textarea id="sw" rows="2">${esc(g("withdrawal_policy")??"تحددها الإدارة")}</textarea><br><button id="sv">حفظ</button> <span id="settingsMsg"></span><p class="mu">تغيير سعر السهم أو مدة المشروع يسري افتراضيًا على التسجيلات الجديدة، أما تغييرات الأسهم للمساهمين الحاليين فتسري على الفترات القادمة بعد اعتماد الطلب.</p></div>`;$("#sv").onclick=async()=>{const vals=[{key:"share_price",value:Number($("#s1").value)},{key:"term_months",value:parseInt($("#s2").value)},{key:"start_date",value:$("#s3").value},{key:"ack_text",value:$("#s4").value},{key:"min_shares",value:parseInt($("#s5").value)},{key:"allow_share_increase",value:$("#ai").checked},{key:"allow_share_reduction",value:$("#ar").checked},{key:"allow_withdrawal",value:$("#aw").checked},{key:"allow_reduction_below_initial",value:$("#ab").checked},{key:"withdrawal_policy",value:$("#sw").value}];const r=await sb.from("settings").upsert(vals);if(r.error)return setInline("settingsMsg","تعذر الحفظ: "+r.error.message,1);await loadSettings();setInline("settingsMsg","تم الحفظ",0)}}
+async function au(t){const{data,error}=await sb.from("audit_logs").select("*").order("id",{ascending:false}).limit(100);if(error)return t.innerHTML=`<div class="box bad">${esc(error.message)}</div>`;t.innerHTML=`<div class="box"><h2>سجل التدقيق (آخر 100)</h2>${tbl(["الوقت","المنفذ","الصلاحية وقت العملية","الجدول","العملية","السجل","التفاصيل"],(data||[]).map(x=>`<tr><td>${String(x.at||"").slice(0,16).replace("T"," ")}</td><td>${esc(x.actor_name||(x.user_id?"سجل قديم":"SYSTEM / SQL"))}</td><td>${esc(x.actor_role?roleLabel(x.actor_role):(x.user_id?"غير محفوظ":"SYSTEM"))}</td><td>${esc(ENTITY_AR[x.entity]||x.entity)}</td><td>${esc(ACTION_AR[x.action]||x.action)}</td><td>${esc(x.record_id)}</td><td><details><summary>عرض</summary><b>قبل</b><pre>${esc(jsonText(x.old_value))}</pre><b>بعد</b><pre>${esc(jsonText(x.new_value))}</pre></details></td></tr>`))}</div>`}
+loadSettings().finally(route);
+
+</script></body></html>
