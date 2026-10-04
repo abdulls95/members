@@ -281,10 +281,241 @@ async function ov(t){
 async function setSh(id,status){const allowed=["ACTIVE","REJECTED","CHANGES_REQUESTED"];if(!allowed.includes(status))return;let note=null;if(status==="CHANGES_REQUESTED"){note=prompt("ما التعديل المطلوب؟");if(!note)return}const r=await sb.from("shareholders").update(note?{status,notes:note}:{status,notes:null}).eq("id",id);if(r.error)return alert("تعذر التنفيذ: "+errText(r.error));staffV()}
 async function rq(t){const{data,error}=await sb.from("shareholders").select("*,commitments(shares,share_price,total,frequency)").in("status",["PENDING","CHANGES_REQUESTED"]).order("created_at");if(error)return t.innerHTML=`<div class="box bad">${esc(error.message)}</div>`;t.innerHTML=`<div class="box"><h2>طلبات التسجيل</h2>${tbl(["الاسم","رقم المساهم","الهاتف","الهوية","الأسهم","الالتزام الشهري","التاريخ","إجراء"],(data||[]).map(s=>{const c=s.commitments?.[0]||{};return `<tr><td>${esc(s.full_name)}</td><td>${esc(s.member_no||"-")}</td><td>${esc(s.phone)}</td><td>${esc(s.id_number)}</td><td>${c.shares??"-"}</td><td>${M(Number(c.shares||0)*Number(c.share_price||APP_SETTINGS.share_price||10))}</td><td>${String(s.created_at||"").slice(0,10)}</td><td>${canP()?`<button data-a="ACTIVE" data-i="${s.id}">موافقة</button> <button class="g" data-a="REJECTED" data-i="${s.id}">رفض</button> <button class="g" data-a="CHANGES_REQUESTED" data-i="${s.id}">طلب تعديل</button>`:"-"}</td></tr>`}))}</div>`;t.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>setSh(b.dataset.i,b.dataset.a))}
 async function sh(t){
- const D=await adminData(),cMap={};D.commitments.forEach(x=>{if(!cMap[x.shareholder_id])cMap[x.shareholder_id]=x});const schMap={};D.schedule.forEach(x=>(schMap[x.commitment_id]??=[]).push(x));const pMap={};D.payments.filter(x=>x.status==="APPROVED").forEach(x=>pMap[x.shareholder_id]=(pMap[x.shareholder_id]||0)+Number(x.amount||0));
- t.innerHTML=`<div class="box"><h2>جميع المساهمين</h2><p class="mu">اضغط على اسم المساهم لفتح ملفه الكامل وإدارة الأسهم والدفعات حسب صلاحيتك. السجل التجريبي يظهر هنا للاختبارات فقط ولا يدخل في الأرقام الرسمية.</p><input id="q" placeholder="بحث بالاسم أو رقم المساهم أو الهاتف أو الهوية"><div id="tt"></div></div>`;
- const draw=()=>{const q=$("#q").value.trim(),searchValues=s=>isViewer()?[s.full_name,s.member_no]:[s.full_name,s.member_no,s.phone,s.id_number];$("#tt").innerHTML=tbl(["رقم","الاسم","الحالة","الحساب الإلكتروني","الأسهم","شهري","المدفوع","متبقي المشروع"],D.shareholders.filter(s=>!q||searchValues(s).some(v=>String(v||"").includes(q))).map(s=>{const cm=cMap[s.id]||{},sc=schMap[cm.id]||[],remaining=nsum(sc,"remaining"),baseState=cm.id?(ST[s.status]||s.status):"بانتظار تحديد الأسهم",state=s.is_test?`🧪 تجريبي — ${baseState}`:baseState,acct=s.user_id?"مفعّل":"غير مفعّل",name=`${s.is_test?'<span class="pill">🧪 تجريبي</span> ':''}${esc(s.full_name)}`;return `<tr><td>${esc(s.member_no||"-")}</td><td><button class="lk" data-prof="${s.id}">${name}</button></td><td>${state}</td><td>${acct}</td><td>${cm.shares??"-"}</td><td>${M(Number(cm.shares||0)*Number(cm.share_price||APP_SETTINGS.share_price||10))}</td><td>${M(pMap[s.id]||0)}</td><td>${M(remaining)}</td></tr>`}));$("#tt").querySelectorAll("[data-prof]").forEach(b=>b.onclick=()=>shareholderProfile(t,b.dataset.prof))};
- draw();$("#q").oninput=draw
+  const D=await adminData(),cMap={};
+
+  D.commitments.forEach(x=>{
+    if(!cMap[x.shareholder_id])cMap[x.shareholder_id]=x
+  });
+
+  const schMap={};
+  D.schedule.forEach(x=>(schMap[x.commitment_id]??=[]).push(x));
+
+  const pMap={};
+  D.payments
+    .filter(x=>x.status==="APPROVED")
+    .forEach(x=>{
+      pMap[x.shareholder_id]=(pMap[x.shareholder_id]||0)+Number(x.amount||0)
+    });
+
+  t.innerHTML=`
+  ${canInit()?`
+  <div class="box">
+    <h2>إضافة مساهم يدوي</h2>
+
+    <p class="mu">
+      إضافة مساهم بدون حساب دخول إلكتروني.
+      ينشأ له رقم مساهم تلقائيًا، وتُنشأ أسهمه التأسيسية وجدول السداد مباشرة.
+    </p>
+
+    <form id="manualShareholder">
+      <div class="f">
+
+        <div>
+          <label>الاسم الكامل</label>
+          <input name="full_name" required>
+        </div>
+
+        <div>
+          <label>رقم الجوال</label>
+          <input name="phone" inputmode="tel">
+        </div>
+
+        <div>
+          <label>رقم الهوية / الجواز</label>
+          <input name="id_number">
+        </div>
+
+        <div>
+          <label>الدولة</label>
+          <input name="country">
+        </div>
+
+        <div>
+          <label>المدينة</label>
+          <input name="city">
+        </div>
+
+        <div>
+          <label>عدد الأسهم التأسيسية</label>
+          <input name="shares" type="number" min="1" step="1" value="1" required>
+        </div>
+
+        <div>
+          <label>خطة السداد</label>
+          <select name="frequency" required>
+            <option value="MONTHLY">شهري</option>
+            <option value="QUARTERLY">ربع سنوي</option>
+            <option value="SEMIANNUAL">نصف سنوي</option>
+            <option value="ANNUAL">سنوي</option>
+            <option value="FULL">دفعة كاملة</option>
+          </select>
+        </div>
+
+        <div class="wide">
+          <label>ملاحظة الإدارة</label>
+          <input name="notes" placeholder="اختياري">
+        </div>
+
+      </div>
+
+      <button id="manualShareholderBtn">إضافة المساهم</button>
+      <span id="manualShareholderMsg"></span>
+    </form>
+  </div>
+  `:""}
+
+  <div class="box">
+    <h2>جميع المساهمين</h2>
+
+    <p class="mu">
+      اضغط على اسم المساهم لفتح ملفه الكامل وإدارة الأسهم والدفعات حسب صلاحيتك.
+      السجل التجريبي يظهر هنا للاختبارات فقط ولا يدخل في الأرقام الرسمية.
+    </p>
+
+    <input id="q" placeholder="بحث بالاسم أو رقم المساهم أو الهاتف أو الهوية">
+
+    <div id="tt"></div>
+  </div>
+  `;
+
+  const draw=()=>{
+    const q=$("#q").value.trim();
+
+    const searchValues=s=>
+      isViewer()
+        ?[s.full_name,s.member_no]
+        :[s.full_name,s.member_no,s.phone,s.id_number];
+
+    $("#tt").innerHTML=tbl(
+      [
+        "رقم",
+        "الاسم",
+        "الحالة",
+        "الحساب الإلكتروني",
+        "الأسهم",
+        "شهري",
+        "المدفوع",
+        "متبقي المشروع"
+      ],
+      D.shareholders
+        .filter(s=>!q||searchValues(s).some(v=>String(v||"").includes(q)))
+        .map(s=>{
+          const cm=cMap[s.id]||{};
+          const sc=schMap[cm.id]||[];
+          const remaining=nsum(sc,"remaining");
+
+          const baseState=cm.id
+            ?(ST[s.status]||s.status)
+            :"بانتظار تحديد الأسهم";
+
+          const state=s.is_test
+            ?`🧪 تجريبي — ${baseState}`
+            :baseState;
+
+          const acct=s.user_id?"مفعّل":"غير مفعّل";
+
+          const name=
+            `${s.is_test?'<span class="pill">🧪 تجريبي</span> ':''}${esc(s.full_name)}`;
+
+          return `
+          <tr>
+            <td>${esc(s.member_no||"-")}</td>
+            <td>
+              <button class="lk" data-prof="${s.id}">
+                ${name}
+              </button>
+            </td>
+            <td>${state}</td>
+            <td>${acct}</td>
+            <td>${cm.shares??"-"}</td>
+            <td>${M(Number(cm.shares||0)*Number(cm.share_price||APP_SETTINGS.share_price||10))}</td>
+            <td>${M(pMap[s.id]||0)}</td>
+            <td>${M(remaining)}</td>
+          </tr>
+          `
+        })
+    );
+
+    $("#tt")
+      .querySelectorAll("[data-prof]")
+      .forEach(b=>{
+        b.onclick=()=>shareholderProfile(t,b.dataset.prof)
+      });
+  };
+
+  draw();
+  $("#q").oninput=draw;
+
+  if($("#manualShareholder")){
+    $("#manualShareholder").onsubmit=async ev=>{
+      ev.preventDefault();
+
+      const f=ev.target;
+      const shares=parseInt(f.shares.value,10);
+
+      if(!f.full_name.value.trim()){
+        return setInline(
+          "manualShareholderMsg",
+          "اسم المساهم مطلوب",
+          true
+        );
+      }
+
+      if(!(shares>0)){
+        return setInline(
+          "manualShareholderMsg",
+          "عدد الأسهم يجب أن يكون سهمًا واحدًا على الأقل",
+          true
+        );
+      }
+
+      if(!confirm(
+        `إضافة ${f.full_name.value.trim()} كمساهم يدوي بعدد ${shares} سهم؟`
+      ))return;
+
+      $("#manualShareholderBtn").disabled=true;
+      setInline(
+        "manualShareholderMsg",
+        "جاري إنشاء المساهم...",
+        false
+      );
+
+      const {data,error}=await sb.rpc(
+        "staff_create_manual_shareholder",
+        {
+          p_full_name:f.full_name.value.trim(),
+          p_phone:f.phone.value.trim()||null,
+          p_id_number:f.id_number.value.trim()||null,
+          p_country:f.country.value.trim()||null,
+          p_city:f.city.value.trim()||null,
+          p_shares:shares,
+          p_frequency:f.frequency.value,
+          p_notes:f.notes.value.trim()||null
+        }
+      );
+
+      $("#manualShareholderBtn").disabled=false;
+
+      if(error){
+        return setInline(
+          "manualShareholderMsg",
+          "تعذر إضافة المساهم: "+error.message,
+          true
+        );
+      }
+
+      const result=Array.isArray(data)?data[0]:data;
+      const memberNo=result?.member_no||"";
+
+      alert(
+        memberNo
+          ?`تمت إضافة المساهم بنجاح ✅\nرقم المساهم: ${memberNo}`
+          :"تمت إضافة المساهم بنجاح ✅"
+      );
+
+      sh(t);
+    };
+  }
 }
 
 async function shareholderProfile(t,shareholderId){
