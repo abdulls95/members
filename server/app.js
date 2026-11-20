@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { inTransaction } from "./db.js";
 import { decodeCursor, encodeCursor, HttpError, parseLimit, parseUuid, requireRole } from "./policy.js";
 
@@ -85,6 +85,182 @@ function bearerToken(request) {
   return match[1];
 }
 
+async function readJson(request, maxBytes = 8192) {
+  const contentType = String(request.headers["content-type"] || "").split(";")[0].trim().toLowerCase();
+  if (contentType !== "application/json") throw new HttpError(415, "JSON_REQUIRED", "Content-Type must be application/json");
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > maxBytes) throw new HttpError(413, "BODY_TOO_LARGE", "Request body is too large");
+    chunks.push(chunk);
+  }
+  if (!size) throw new HttpError(400, "EMPTY_BODY", "A JSON request body is required");
+  let body;
+  try { body = JSON.parse(Buffer.concat(chunks).toString("utf8")); }
+  catch { throw new HttpError(400, "INVALID_JSON", "Request body is not valid JSON"); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new HttpError(400, "INVALID_BODY", "Request body must be a JSON object");
+  }
+  return body;
+}
+
+function normalizeWorkspaceRequest(body) {
+  const allowed = new Set(["templateId", "displayName", "resourceProfile", "projectId"]);
+  if (Object.keys(body).some((key) => !allowed.has(key))) {
+    throw new HttpError(400, "UNSUPPORTED_FIELD", "Request contains an unsupported field");
+  }
+  if (typeof body.templateId !== "string" || !/^[a-z0-9][a-z0-9_-]{1,63}$/.test(body.templateId)) {
+    throw new HttpError(400, "INVALID_TEMPLATE", "An approved template identifier is required");
+  }
+  if (typeof body.displayName !== "string" || body.displayName.trim().length < 1 || body.displayName.trim().length > 64) {
+    throw new HttpError(400, "INVALID_DISPLAY_NAME", "Workspace name must be between 1 and 64 characters");
+  }
+  if (!["starter", "standard"].includes(body.resourceProfile)) {
+    throw new HttpError(400, "INVALID_RESOURCE_PROFILE", "An approved resource profile is required");
+  }
+  let projectId = null;
+  if (body.projectId !== undefined && body.projectId !== null) projectId = parseUuid(body.projectId);
+  return {
+    templateId: body.templateId,
+    displayName: body.displayName.trim(),
+    resourceProfile: body.resourceProfile,
+    projectId
+  };
+}
+
+async function createWorkspaceRequest(client, user, role, tenantId, body, idempotencyKey, requestId) {
+  requireRole(role, ["TENANT_OWNER", "TENANT_ADMIN", "OPERATOR", "DEVELOPER"]);
+  if (typeof idempotencyKey !== "string" || !/^[A-Za-z0-9._~-]{16,128}$/.test(idempotencyKey)) {
+    throw new HttpError(400, "IDEMPOTENCY_KEY_REQUIRED", "A valid Idempotency-Key header is required");
+  }
+
+  const input = normalizeWorkspaceRequest(body);
+  const requestHash = createHash("sha256").update(JSON.stringify(input)).digest("hex");
+  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [tenantId + ":" + user.id + ":" + idempotencyKey]);
+
+  const existing = await client.query(
+    `SELECT j.id AS job_id, j.request_hash, j.state AS job_state,
+            w.id AS workspace_id, w.display_name, w.state AS workspace_state,
+            w.template_id, w.resource_profile, w.expires_at
+     FROM internal.workspace_jobs j
+     JOIN public.workspaces w ON w.tenant_id = j.tenant_id AND w.id = j.workspace_id
+     WHERE j.tenant_id = $1 AND j.requested_by = $2 AND j.idempotency_key = $3`,
+    [tenantId, user.id, idempotencyKey]
+  );
+  if (existing.rowCount) {
+    const row = existing.rows[0];
+    if (row.request_hash !== requestHash) {
+      throw new HttpError(409, "IDEMPOTENCY_KEY_REUSED", "This Idempotency-Key was already used for a different request");
+    }
+    return {
+      replayed: true,
+      workspace: {
+        id: row.workspace_id, displayName: row.display_name, state: row.workspace_state,
+        templateId: row.template_id, resourceProfile: row.resource_profile, expiresAt: row.expires_at
+      },
+      job: { id: row.job_id, state: row.job_state, action: "CREATE" }
+    };
+  }
+
+  const template = await client.query(
+    "SELECT id, version FROM public.workspace_templates WHERE id = $1 AND resource_profile = $2 AND active = true ORDER BY version DESC LIMIT 1",
+    [input.templateId, input.resourceProfile]
+  );
+  if (!template.rowCount) throw new HttpError(400, "TEMPLATE_NOT_AVAILABLE", "The requested template is not active for this resource profile");
+
+  const profile = await client.query(
+    "SELECT id, cpu_millicores, memory_mb, storage_mb, max_ttl_minutes FROM public.resource_profiles WHERE id = $1 AND active = true",
+    [input.resourceProfile]
+  );
+  if (!profile.rowCount) throw new HttpError(400, "RESOURCE_PROFILE_NOT_AVAILABLE", "The requested resource profile is not active");
+
+  if (input.projectId) {
+    const project = await client.query(
+      "SELECT id FROM public.projects WHERE tenant_id = $1 AND id = $2",
+      [tenantId, input.projectId]
+    );
+    if (!project.rowCount) throw new HttpError(404, "PROJECT_NOT_FOUND", "Project not found");
+    if (["OPERATOR", "DEVELOPER"].includes(role)) {
+      const assignment = await client.query(
+        "SELECT 1 FROM public.project_memberships WHERE tenant_id = $1 AND project_id = $2 AND user_id = $3",
+        [tenantId, input.projectId, user.id]
+      );
+      if (!assignment.rowCount) throw new HttpError(403, "PROJECT_ACCESS_DENIED", "You are not assigned to this project");
+    }
+  }
+
+  const quota = await client.query(
+    "SELECT max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs FROM public.tenant_quotas WHERE tenant_id = $1",
+    [tenantId]
+  );
+  if (!quota.rowCount) throw new HttpError(503, "QUOTA_NOT_CONFIGURED", "Workspace quota is not configured for this tenant");
+
+  const usage = await client.query(
+    `SELECT count(*)::integer AS workspace_count,
+            COALESCE(sum(rp.cpu_millicores), 0)::integer AS cpu_millicores,
+            COALESCE(sum(rp.memory_mb), 0)::integer AS memory_mb,
+            COALESCE(sum(rp.storage_mb), 0)::integer AS storage_mb
+     FROM public.workspaces w
+     JOIN public.resource_profiles rp ON rp.id = w.resource_profile
+     WHERE w.tenant_id = $1 AND w.state NOT IN ('DESTROYED', 'REJECTED') AND w.expires_at > now()`,
+    [tenantId]
+  );
+  const pending = await client.query(
+    "SELECT count(*)::integer AS pending_count FROM public.workspaces WHERE tenant_id = $1 AND state IN ('REQUESTED', 'POLICY_CHECKED', 'PROVISIONING')",
+    [tenantId]
+  );
+  const q = quota.rows[0];
+  const u = usage.rows[0];
+  const p = profile.rows[0];
+  if (
+    u.workspace_count + 1 > q.max_workspaces ||
+    u.cpu_millicores + p.cpu_millicores > q.max_cpu_millicores ||
+    u.memory_mb + p.memory_mb > q.max_memory_mb ||
+    u.storage_mb + p.storage_mb > q.max_storage_mb ||
+    pending.rows[0].pending_count + 1 > q.max_concurrent_jobs
+  ) {
+    throw new HttpError(429, "WORKSPACE_QUOTA_EXCEEDED", "Workspace quota has been reached");
+  }
+
+  const workspaceResult = await client.query(
+    `INSERT INTO public.workspaces
+       (tenant_id, project_id, template_id, template_version, display_name, state, created_by, expires_at, resource_profile)
+     VALUES ($1, $2, $3, $4, $5, 'REQUESTED', $6, now() + make_interval(mins => $7), $8)
+     RETURNING id, display_name, state, template_id, resource_profile, expires_at`,
+    [tenantId, input.projectId, template.rows[0].id, template.rows[0].version, input.displayName, user.id, p.max_ttl_minutes, p.id]
+  );
+  const workspace = workspaceResult.rows[0];
+  const jobResult = await client.query(
+    `INSERT INTO internal.workspace_jobs
+       (tenant_id, workspace_id, action, state, idempotency_key, request_hash, requested_by)
+     VALUES ($1, $2, 'CREATE', 'QUEUED', $3, $4, $5)
+     RETURNING id, state, action`,
+    [tenantId, workspace.id, idempotencyKey, requestHash, user.id]
+  );
+  const job = jobResult.rows[0];
+
+  await client.query(
+    `INSERT INTO public.workspace_events (tenant_id, workspace_id, event_type, actor_id, request_id, details)
+     VALUES ($1, $2, 'CREATED', $3, $4, jsonb_build_object('jobId', $5::text, 'resourceProfile', $6::text))`,
+    [tenantId, workspace.id, user.id, requestId, job.id, p.id]
+  );
+  await client.query(
+    `INSERT INTO public.audit_events (tenant_id, actor_id, action, target_type, target_id, outcome, request_id, policy_version, metadata)
+     VALUES ($1, $2, 'workspace.create.requested', 'workspace', $3, 'SUCCESS', $4, 'v1', jsonb_build_object('jobId', $5::text, 'resourceProfile', $6::text))`,
+    [tenantId, user.id, workspace.id, requestId, job.id, p.id]
+  );
+
+  return {
+    replayed: false,
+    workspace: {
+      id: workspace.id, displayName: workspace.display_name, state: workspace.state,
+      templateId: workspace.template_id, resourceProfile: workspace.resource_profile, expiresAt: workspace.expires_at
+    },
+    job: { id: job.id, state: job.state, action: job.action }
+  };
+}
+
 export function createApiServer({ config, pool, verifyAccessToken, rateLimit = createRateLimiter() }) {
   return createServer(async (request, response) => {
     const requestId = randomUUID();
@@ -101,7 +277,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
       response.setHeader("Access-Control-Allow-Origin", origin);
       response.setHeader("Vary", "Origin");
       response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-      response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
       response.setHeader("Access-Control-Max-Age", "600");
     }
 
@@ -135,7 +311,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
         json(response, status, { status: "ready", requestId });
         return;
       }
-      if (request.method !== "GET") throw new HttpError(405, "METHOD_NOT_ALLOWED", "Method not allowed");
+      if (request.method !== "GET" && request.method !== "POST") throw new HttpError(405, "METHOD_NOT_ALLOWED", "Method not allowed");
       if (parts[0] !== "v1") throw new HttpError(404, "NOT_FOUND", "Route not found");
 
       const token = bearerToken(request);
@@ -168,6 +344,36 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
 
       if (parts.length >= 3 && parts[1] === "tenants") {
         const tenantId = parseUuid(parts[2]);
+        if (parts.length === 4 && parts[3] === "workspaces" && request.method === "POST") {
+          const body = await readJson(request);
+          const idempotencyKey = request.headers["idempotency-key"];
+          const result = await withTenant(pool, principal, tenantId, (client, user, role) =>
+            createWorkspaceRequest(client, user, role, tenantId, body, idempotencyKey, requestId)
+          );
+          status = result.replayed ? 200 : 202;
+          json(response, status, { data: result, requestId });
+          return;
+        }
+
+        if (parts.length === 5 && parts[3] === "workspace-jobs" && request.method === "GET") {
+          const jobId = parseUuid(parts[4]);
+          const data = await withTenant(pool, principal, tenantId, async (client, user) => {
+            const result = await client.query(
+              `SELECT j.id, j.action, j.state, j.attempt_count, j.created_at, j.updated_at,
+                      w.id AS workspace_id, w.display_name, w.state AS workspace_state
+               FROM internal.workspace_jobs j
+               JOIN public.workspaces w ON w.tenant_id = j.tenant_id AND w.id = j.workspace_id
+               WHERE j.tenant_id = $1 AND j.requested_by = $2 AND j.id = $3`,
+              [tenantId, user.id, jobId]
+            );
+            if (!result.rowCount) throw new HttpError(404, "JOB_NOT_FOUND", "Workspace job not found");
+            return { job: result.rows[0] };
+          });
+          status = 200;
+          json(response, status, { data, requestId });
+          return;
+        }
+
         if (parts.length === 4 && parts[3] === "workspaces") {
           const limit = parseLimit(url.searchParams.get("limit"));
           const cursor = decodeCursor(url.searchParams.get("cursor"));
