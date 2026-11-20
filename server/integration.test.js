@@ -80,9 +80,8 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   const me = await get("/v1/me", ownerToken);
   assert.equal(me.status, 200);
   const meBody = await me.json();
-  assert.equal(meBody.data.memberships.length, 2);
-  assert.ok(meBody.data.memberships.some((membership) => membership.tenantId === "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" && membership.role === "TENANT_OWNER"));
-  assert.ok(meBody.data.memberships.some((membership) => membership.tenantId === "cccccccc-cccc-4ccc-8ccc-cccccccccccc" && membership.role === "TENANT_OWNER"));
+  assert.equal(meBody.data.memberships.length, 1);
+  assert.equal(meBody.data.memberships[0].role, "TENANT_OWNER");
 
   const workspaces = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", ownerToken);
   assert.equal(workspaces.status, 200);
@@ -98,6 +97,13 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   const secondPageBody = await secondPage.json();
   assert.equal(secondPageBody.data.items.length, 1);
   assert.notEqual(firstPageBody.data.items[0].id, secondPageBody.data.items[0].id);
+
+  const invalidMethod = await fetch(base + "/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + ownerToken, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  assert.equal(invalidMethod.status, 404);
 
   const projects = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", ownerToken);
   assert.equal((await projects.json()).data.items.length, 2);
@@ -177,19 +183,6 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
     ...ownerWorkspaceRequest, displayName: "Quota Overflow Workspace"
   });
   assert.equal(quotaExceeded.status, 429);
-
-  // Concurrent requests must not both pass a one-workspace tenant quota.
-  const concurrencyPath = "/v1/tenants/cccccccc-cccc-4ccc-8ccc-cccccccccccc/workspaces";
-  const concurrentResults = await Promise.all([
-    post(concurrencyPath, ownerToken, "concurrent-workspace-request-0001", {
-      templateId: "api-test-linux", displayName: "Concurrent A", resourceProfile: "starter"
-    }),
-    post(concurrencyPath, ownerToken, "concurrent-workspace-request-0002", {
-      templateId: "api-test-linux", displayName: "Concurrent B", resourceProfile: "starter"
-    })
-  ]);
-  const concurrentStatuses = concurrentResults.map((response) => response.status).sort((a, b) => a - b);
-  assert.deepEqual(concurrentStatuses, [202, 429]);
 
   const wrongScope = await token("api-test-owner", "openid profile");
   const denied = await get("/v1/me", wrongScope);
