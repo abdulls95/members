@@ -206,7 +206,16 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
     completeJob(workerPool, { jobId: lease.jobId, leaseToken: "A".repeat(43) }),
     (error) => error instanceof LeaseLostError
   );
-  const completed = await completeJob(workerPool, lease);
+  await workerPool.query(
+    "UPDATE internal.workspace_jobs SET lease_expires_at = now() - interval '1 second' WHERE id = $1",
+    [lease.jobId]
+  );
+  const reclaimedLease = await claimNextJob(workerPool, { leaseSeconds: 60 });
+  assert.ok(reclaimedLease);
+  assert.equal(reclaimedLease.jobId, lease.jobId);
+  assert.equal(reclaimedLease.attemptCount, 2);
+  await assert.rejects(completeJob(workerPool, lease), (error) => error instanceof LeaseLostError);
+  const completed = await completeJob(workerPool, reclaimedLease);
   assert.equal(completed.state, "SUCCEEDED");
 
   const retryLease = await claimNextJob(workerPool, { leaseSeconds: 60 });
