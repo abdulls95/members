@@ -36,7 +36,10 @@
 - [ ] Add production audit export, retention controls and tamper-evident archival.
 
 ## Phase 2 — Isolated execution
-- [ ] Select microVM or equivalently strong runtime isolation and hardened base images.
+- [x] Select Firecracker microVM isolation and pin the current supported baseline (v1.18.0).
+- [x] Implement and test an allowlisted Firecracker API client over per-VM Unix sockets.
+- [x] Add read-only host preflight checks for KVM, cgroup v2, Jailer identity, pinned binaries and root-owned paths.
+- [ ] Implement the privileged host supervisor, Jailer lifecycle and jailed resource staging.
 - [x] Add a typed, quota-aware workspace request API and idempotent job queue.
 - [x] Define typed, allowlisted workspace request operations and a database queue.
 - [ ] Build the trusted orchestrator and runtime adapter; queue lease primitives exist but do not launch workloads.
