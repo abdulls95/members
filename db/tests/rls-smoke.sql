@@ -35,7 +35,7 @@ BEGIN;
 SET LOCAL cornod.user_id = '10000000-0000-4000-8000-000000000001';
 SET LOCAL cornod.tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
-DO $$
+DO $$$
 BEGIN
   IF (SELECT count(*) FROM public.tenants) <> 1 THEN RAISE EXCEPTION 'tenant isolation failed'; END IF;
   IF (SELECT count(*) FROM public.memberships) <> 1 THEN RAISE EXCEPTION 'membership isolation failed'; END IF;
@@ -55,7 +55,7 @@ BEGIN
   END IF;
 END $$;
 
-DO $$
+DO $$$
 BEGIN
   BEGIN
     INSERT INTO public.projects (tenant_id, name, created_by)
@@ -83,7 +83,7 @@ RESET ROLE;
 
 SET ROLE cornod_worker;
 BEGIN;
-DO $
+DO $$
 BEGIN
   IF (SELECT count(*) FROM internal.workspace_jobs) <> 2 THEN
     RAISE EXCEPTION 'worker cannot see the full job queue';
@@ -92,11 +92,11 @@ BEGIN
   WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
     AND requested_by = '30000000-0000-4000-8000-000000000003';
   IF NOT FOUND THEN RAISE EXCEPTION 'worker cannot update a claimed job'; END IF;
-END $;
+END $$;
 ROLLBACK;
 RESET ROLE;
 
-DO $
+DO $$
 BEGIN
   IF (SELECT rolbypassrls OR rolsuper FROM pg_roles WHERE rolname = 'cornod_app') THEN
     RAISE EXCEPTION 'cornod_app must not bypass row-level security';
@@ -110,6 +110,6 @@ BEGIN
      OR NOT has_column_privilege('cornod_worker', 'public.workspaces', 'state', 'UPDATE') THEN
     RAISE EXCEPTION 'worker column privileges are not sufficiently restricted';
   END IF;
-END $;
+END $$;
 
 SELECT 'CORNOD database isolation smoke tests passed' AS result;
