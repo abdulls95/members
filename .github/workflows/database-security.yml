@@ -34,10 +34,10 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
-      - name: Apply initial schema
+      - name: Apply schema migrations in order
         env:
           PGPASSWORD: test-only-password
-        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -f db/migrations/0001_initial.sql
+        run: for migration in db/migrations/*.sql; do psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -f "$migration"; done
       - name: Verify tenant isolation and append-only permissions
         env:
           PGPASSWORD: test-only-password
