@@ -137,7 +137,7 @@ async function createWorkspaceRequest(client, user, role, tenantId, body, idempo
 
   const input = normalizeWorkspaceRequest(body);
   const requestHash = createHash("sha256").update(JSON.stringify(input)).digest("hex");
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [tenantId + ":" + user.id + ":" + idempotencyKey]);
+  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [tenantId]);
 
   const existing = await client.query(
     `SELECT j.id AS job_id, j.request_hash, j.state AS job_state,
