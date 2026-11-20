@@ -42,51 +42,15 @@ function validateLease(lease) {
  * workloads. A separately reviewed runtime adapter must do that work.
  */
 export async function claimNextJob(pool, { leaseSeconds = 60 } = {}) {
-  boundedInteger(leaseSeconds, 15, 300, "leaseSeconds");
+  boundedInteger(leaseSeconds, 10, 120, "leaseSeconds");
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(Buffer.from(token, "base64url")).digest();
 
   return inTransaction(pool, async (client) => {
-    await client.query(
-      `UPDATE internal.workspace_jobs
-       SET state = 'FAILED',
-           lease_expires_at = NULL,
-           lease_token_hash = NULL,
-           last_error_code = 'LEASE_EXHAUSTED',
-           completed_at = now(),
-           updated_at = now()
-       WHERE state = 'LEASED'
-         AND lease_expires_at <= now()
-         AND attempt_count >= max_attempts`
-    );
-
     const result = await client.query(
-      `WITH candidate AS (
-         SELECT id
-         FROM internal.workspace_jobs
-         WHERE (
-           (state = 'QUEUED' AND available_at <= now())
-           OR (state = 'LEASED' AND lease_expires_at <= now())
-         )
-           AND attempt_count < max_attempts
-         ORDER BY available_at ASC, created_at ASC, id ASC
-         FOR UPDATE SKIP LOCKED
-         LIMIT 1
-       )
-       UPDATE internal.workspace_jobs AS job
-       SET state = 'LEASED',
-           attempt_count = job.attempt_count + 1,
-           lease_expires_at = now() + make_interval(secs => $1),
-           lease_token_hash = $2,
-           updated_at = now()
-       FROM candidate
-       WHERE job.id = candidate.id
-       RETURNING job.id, job.tenant_id, job.workspace_id, job.action,
-                 job.requested_by, job.attempt_count, job.max_attempts,
-                 job.lease_expires_at`,
-      [leaseSeconds, tokenHash]
+      "SELECT * FROM internal.claim_next_workspace_job($1, $2)",
+      [tokenHash, leaseSeconds]
     );
-
     if (!result.rowCount) return null;
     const row = result.rows[0];
     return {
@@ -104,7 +68,7 @@ export async function claimNextJob(pool, { leaseSeconds = 60 } = {}) {
 }
 
 export async function renewJobLease(pool, lease, { leaseSeconds = 60 } = {}) {
-  boundedInteger(leaseSeconds, 15, 300, "leaseSeconds");
+  boundedInteger(leaseSeconds, 10, 120, "leaseSeconds");
   const { jobId, tokenHash } = validateLease(lease);
   return inTransaction(pool, async (client) => {
     const result = await client.query(

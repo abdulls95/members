@@ -140,12 +140,21 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
     resourceProfile: "starter",
     projectId: "aaaaaaaa-0000-4000-8000-000000000001"
   };
-  const ownerCreate = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest);
-  assert.equal(ownerCreate.status, 202);
-  const ownerCreateBody = await ownerCreate.json();
+  // Two simultaneous first-use requests with the same idempotency key must
+  // create exactly one workspace and replay the same result to the other caller.
+  const ownerCreateResponses = await Promise.all([
+    post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest),
+    post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest)
+  ]);
+  assert.deepEqual(ownerCreateResponses.map((response) => response.status).sort((a, b) => a - b), [200, 202]);
+  const ownerCreateBodies = await Promise.all(ownerCreateResponses.map((response) => response.json()));
+  const ownerCreateBody = ownerCreateBodies.find((body) => body.data.replayed === false);
+  const ownerReplayBody = ownerCreateBodies.find((body) => body.data.replayed === true);
+  assert.ok(ownerCreateBody);
+  assert.ok(ownerReplayBody);
+  assert.equal(ownerCreateBody.data.workspace.id, ownerReplayBody.data.workspace.id);
   assert.equal(ownerCreateBody.data.workspace.state, "REQUESTED");
   assert.equal(ownerCreateBody.data.job.state, "QUEUED");
-  assert.equal(ownerCreateBody.data.replayed, false);
 
   const jobStatus = await get(tenantPath + "/workspace-jobs/" + ownerCreateBody.data.job.id, ownerToken);
   assert.equal(jobStatus.status, 200);
@@ -153,9 +162,9 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
 
   const ownerReplay = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest);
   assert.equal(ownerReplay.status, 200);
-  const ownerReplayBody = await ownerReplay.json();
-  assert.equal(ownerReplayBody.data.replayed, true);
-  assert.equal(ownerReplayBody.data.workspace.id, ownerCreateBody.data.workspace.id);
+  const ownerReplayAgainBody = await ownerReplay.json();
+  assert.equal(ownerReplayAgainBody.data.replayed, true);
+  assert.equal(ownerReplayAgainBody.data.workspace.id, ownerCreateBody.data.workspace.id);
 
   const idempotencyConflict = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", {
     ...ownerWorkspaceRequest, displayName: "Different Request"

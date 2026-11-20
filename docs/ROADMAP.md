@@ -25,7 +25,9 @@
 - [x] Implement OIDC access-token verification for the API; browser Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies remain open.
 - [ ] Implement tenant membership administration through separately reviewed privileged procedures.
 - [x] Implement tenant-scoped API reads and quota-aware workspace request queuing with idempotency.
+- [x] Serialize tenant workspace creation before idempotency lookup, preventing duplicate creates on simultaneous first-use retries and quota races.
 - [x] Add a separate worker-role queue lease library with hashed one-time lease tokens, renewal, completion, bounded retries and expiry handling.
+- [x] Restrict queue claiming to a worker-only PostgreSQL function and narrow API sequence privileges.
 - [x] Add exact-origin CORS checks, request-size limits, bounded in-process rate limiting and idempotent workspace request handling.
 - [ ] Add production gateway rate limits, CSRF protections for the future cookie session and session revocation.
 - [ ] Configure managed secret storage and isolated development/staging/production environments.

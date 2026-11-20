@@ -17,17 +17,17 @@ The site is a static frontend preview only. It is not a private workspace or a p
 - Responsive Arabic/English control-center interface.
 - Accessible navigation behavior and a restrictive frontend Content Security Policy.
 - Static validation and GitHub Actions quality checks.
-- Proposed control-plane API contract and OpenAPI description.
-- Proposed tenant authorization matrix and provider-neutral logical data model.
-- Executable PostgreSQL migrations for tenant-owned records, row-level security, short-lived terminal ticket scoping and append-only audit/usage permissions.
-- CI-backed PostgreSQL isolation smoke tests against an ephemeral database.
+- OIDC-verifying control-plane API foundation, tenant-scoped routes and a quota-aware workspace request queue.
+- Tenant authorization matrix and provider-neutral logical data model.
+- Executable PostgreSQL migrations for tenant isolation, restricted API/worker roles, short-lived ticket scoping, worker-only queue claims and append-only audit/usage permissions.
+- CI-backed PostgreSQL isolation, worker-claim, signed-token API and container smoke tests against ephemeral services.
 - Architecture, threat model and release-blocking security checklist.
 
 ## Not implemented
 
-- No identity provider, browser login, MFA enrollment or live tenant accounts have been configured. The repository now contains an OIDC-verifying, read-only API service foundation.
+- No identity provider, browser login/BFF, MFA enrollment or live tenant accounts have been configured. The API verifies externally issued OIDC bearer tokens when configured.
 - No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
-- No deployed background worker, Linux runtime, isolated workspaces or executable terminal. A tested queue-lease library exists, but it does not launch workloads. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job; no worker launches it yet.
+- No deployed background worker, Linux runtime, isolated workspaces or executable terminal. The tested queue lease engine does not launch workloads. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job.
 - No tool installation or command execution.
 - No billing, metering service or production audit pipeline.
 
