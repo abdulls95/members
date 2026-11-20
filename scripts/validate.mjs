@@ -56,7 +56,7 @@ assert.match(openapi, /workspace-jobs/, "Workspace job status contract is missin
 assert.match(openapi, /bearerAuth/, "OpenAPI must match OIDC bearer authentication");
 assert.match(firecracker, /socketPath/, "Firecracker API must use a Unix socket");
 assert.match(firecracker, /ENDPOINTS/, "Firecracker API paths must be allowlisted");
-assert.doesNotMatch(firecracker, /child_process|spawn\\s*\\(|exec\\s*\\(/, "Firecracker API adapter must not spawn host processes");
+assert.doesNotMatch(firecracker, /child_process|spawn\s*\(|exec\s*\(/, "Firecracker API adapter must not spawn host processes");
 for (const path of [
   "docs/ARCHITECTURE.md", "docs/THREAT-MODEL.md", "docs/ROADMAP.md",
   "docs/API-CONTRACT.md", "docs/AUTHORIZATION-MATRIX.md", "docs/DATA-MODEL.md",
