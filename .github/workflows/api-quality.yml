@@ -1,7 +1,7 @@
 name: CORNOD API quality checks
 on:
   push:
-    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening"]
+    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline"]
     paths:
       - "server/**"
       - "db/**"
