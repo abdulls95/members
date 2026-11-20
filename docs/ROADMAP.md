@@ -14,6 +14,9 @@
 
 ## Phase 1 — Identity and control plane
 - [ ] Select hosting, identity provider and data region through an explicit infrastructure decision.
+- [x] Implement initial PostgreSQL tenant schema, row-level security and restricted runtime-role grants.
+- [x] Add CI integration tests for cross-tenant isolation, terminal ticket owner scope and append-only audit/usage records.
+- [ ] Deploy a managed PostgreSQL instance only after infrastructure and region approval.
 - [ ] Require MFA for privileged roles and document secure account recovery.
 - [ ] Implement tenant membership, RBAC/ABAC policy evaluation and revocation.
 - [ ] Implement the API contract with object-level authorization on every route.
