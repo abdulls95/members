@@ -160,7 +160,7 @@ DECLARE
   table_name text;
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
-    'tenants', 'memberships', 'projects', 'project_memberships',
+    'memberships', 'projects', 'project_memberships',
     'workspaces', 'workspace_events', 'terminal_tickets',
     'audit_events', 'usage_ledger'
   ] LOOP
@@ -171,13 +171,34 @@ BEGIN
       table_name
     );
   END LOOP;
-END $$;
+END $;
+
+ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenants FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_self_access ON public.tenants
+  USING (id = NULLIF(current_setting('cornod.tenant_id', true), '')::uuid)
+  WITH CHECK (id = NULLIF(current_setting('cornod.tenant_id', true), '')::uuid);
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users FORCE ROW LEVEL SECURITY;
 CREATE POLICY user_self_access ON public.users
   USING (id = NULLIF(current_setting('cornod.user_id', true), '')::uuid)
   WITH CHECK (id = NULLIF(current_setting('cornod.user_id', true), '')::uuid);
+CREATE POLICY user_identity_lookup ON public.users
+  USING (
+    oidc_issuer = NULLIF(current_setting('cornod.oidc_issuer', true), '')
+    AND oidc_subject = NULLIF(current_setting('cornod.oidc_subject', true), '')
+  )
+  WITH CHECK (
+    oidc_issuer = NULLIF(current_setting('cornod.oidc_issuer', true), '')
+    AND oidc_subject = NULLIF(current_setting('cornod.oidc_subject', true), '')
+  );
+
+CREATE POLICY membership_self_read ON public.memberships
+  FOR SELECT USING (
+    user_id = NULLIF(current_setting('cornod.user_id', true), '')::uuid
+    AND revoked_at IS NULL
+  );
 
 ALTER TABLE public.workspace_templates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY active_template_catalog_read ON public.workspace_templates
@@ -191,9 +212,10 @@ GRANT SELECT, INSERT, UPDATE ON public.memberships TO cornod_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.projects TO cornod_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_memberships TO cornod_app;
 GRANT SELECT ON public.workspace_templates TO cornod_app;
-GRANT SELECT, INSERT, UPDATE ON public.workspaces TO cornod_app;
+GRANT SELECT, INSERT ON public.workspaces TO cornod_app;
 GRANT SELECT, INSERT ON public.workspace_events TO cornod_app;
-GRANT SELECT, INSERT, UPDATE ON public.terminal_tickets TO cornod_app;
+GRANT SELECT, INSERT ON public.terminal_tickets TO cornod_app;
+GRANT UPDATE (consumed_at, revoked_at) ON public.terminal_tickets TO cornod_app;
 GRANT SELECT, INSERT ON public.audit_events TO cornod_app;
 GRANT SELECT, INSERT ON public.usage_ledger TO cornod_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cornod_app;
