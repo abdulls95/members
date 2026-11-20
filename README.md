@@ -25,8 +25,8 @@ The site is a static frontend preview only. It is not a private workspace or a p
 
 ## Not implemented
 
-- No authentication, MFA or tenant accounts.
-- No database has been provisioned or connected to a live service. The repository contains reviewed schema migrations and automated PostgreSQL security tests only.
+- No identity provider, browser login, MFA enrollment or live tenant accounts have been configured. The repository now contains an OIDC-verifying, read-only API service foundation.
+- No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
 - No Linux runtime, isolated workspaces or executable terminal.
 - No tool installation or command execution.
 - No billing, metering service or production audit pipeline.
@@ -50,6 +50,7 @@ The interface deliberately does not simulate successful backend operations.
 - [Authorization matrix](docs/AUTHORIZATION-MATRIX.md)
 - [Logical data model](docs/DATA-MODEL.md)
 - [Database migrations and security model](db/README.md)
+- [API service implementation and deployment boundary](docs/API-SERVICE.md)
 - [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)
 - [Delivery roadmap](docs/ROADMAP.md)
 

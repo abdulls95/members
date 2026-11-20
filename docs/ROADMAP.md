@@ -18,7 +18,10 @@
 - [x] Add CI integration tests for cross-tenant isolation, terminal ticket owner scope and append-only audit/usage records.
 - [ ] Deploy a managed PostgreSQL instance only after infrastructure and region approval.
 - [ ] Require MFA for privileged roles and document secure account recovery.
-- [ ] Implement tenant membership, RBAC/ABAC policy evaluation and revocation.
+- [x] Implement read-only OIDC access-token verification, current-user and tenant-scoped query routes with role-gated audit/usage reads.
+- [x] Add signed-token + PostgreSQL integration tests for tenant boundaries and role enforcement.
+- [ ] Implement browser Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies.
+- [ ] Implement tenant membership administration through separately reviewed privileged procedures.
 - [ ] Implement the API contract with object-level authorization on every route.
 - [ ] Add CSRF/CORS policy, rate limits, idempotency and session revocation.
 - [ ] Configure managed secret storage and isolated development/staging/production environments.
