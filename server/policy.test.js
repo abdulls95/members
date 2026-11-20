@@ -17,6 +17,7 @@ test("pagination limits are bounded", () => {
 test("cursor round trip and tamper rejection", () => {
   const cursor = encodeCursor({ time: "2026-11-20T12:00:00.000Z", id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" });
   assert.deepEqual(decodeCursor(cursor), { time: "2026-11-20T12:00:00.000Z", id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" });
+  assert.deepEqual(decodeCursor(encodeCursor({ time: "1795204800123456", id: "42" })), { time: "1795204800123456", id: "42" });
   assert.throws(() => decodeCursor("not a cursor"), (error) => error.code === "INVALID_CURSOR");
 });
 
