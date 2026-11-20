@@ -39,3 +39,12 @@ Policy failure becomes REJECTED; runtime health failure becomes QUARANTINED and 
 
 ## Deployment gates
 No public release until identity, isolation, egress policy, audit, quotas, abuse response, backup/restore, incident runbooks and independent security testing pass. This is a target architecture, not proof of deployed controls.
+
+## Related implementation contracts
+
+- Tenant roles and object-level authorization: `docs/AUTHORIZATION-MATRIX.md`.
+- Provider-neutral logical data model and isolation rules: `docs/DATA-MODEL.md`.
+- Control-plane HTTP contract: `docs/API-CONTRACT.md` and `openapi/cornod-v1.yaml`.
+- Release-blocking evidence checklist: `docs/SECURITY-ACCEPTANCE.md`.
+
+These documents are design artifacts only. They do not indicate that the corresponding services or controls are deployed.
