@@ -1,7 +1,7 @@
 name: CORNOD API quality checks
 on:
   push:
-    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening"]
+    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline"]
     paths:
       - "server/**"
       - "db/**"
@@ -43,6 +43,8 @@ jobs:
           node-version: 22
       - name: Install exact direct dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Provision restricted runtime role
         env:
           PGPASSWORD: test-only-password
@@ -61,6 +63,14 @@ jobs:
         env:
           API_TEST_DATABASE_URL: postgresql://cornod_app:test-only-password@127.0.0.1:5432/cornod_test
         run: npm test
+      - name: Generate CycloneDX dependency SBOM
+        run: npm sbom --omit=dev --sbom-format=cyclonedx > sbom.cdx.json
+      - name: Upload dependency SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: cornod-api-sbom
+          path: sbom.cdx.json
+          retention-days: 30
       - name: Build API container image
         run: docker build --pull --tag cornod-api:ci .
       - name: Verify container runs as non-root
