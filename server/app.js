@@ -190,6 +190,9 @@ async function createWorkspaceRequest(client, user, role, tenantId, body, idempo
     }
   }
 
+  // Serialize quota accounting per tenant so concurrent create requests cannot over-allocate.
+  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", ["cornod:tenant-quota:" + tenantId]);
+
   const quota = await client.query(
     "SELECT max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs FROM public.tenant_quotas WHERE tenant_id = $1",
     [tenantId]
