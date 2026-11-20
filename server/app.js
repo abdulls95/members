@@ -171,26 +171,29 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
         if (parts.length === 4 && parts[3] === "workspaces") {
           const limit = parseLimit(url.searchParams.get("limit"));
           const cursor = decodeCursor(url.searchParams.get("cursor"));
-          const data = await withTenant(pool, principal, tenantId, async (client) => {
-            const values = [tenantId];
-            let where = "tenant_id = $1";
+          const data = await withTenant(pool, principal, tenantId, async (client, user, role) => {
+            const tenantWide = ["TENANT_OWNER", "TENANT_ADMIN", "AUDITOR"].includes(role);
+            const values = [tenantId, tenantWide, user.id];
+            let where = "tenant_id = $1 AND ($2::boolean OR created_by = $3 OR project_id IN (SELECT project_id FROM public.project_memberships WHERE tenant_id = $1 AND user_id = $3))";
             if (cursor) {
               values.push(cursor.time, cursor.id);
-              where += " AND (created_at, id) < ($2::timestamptz, $3::uuid)";
+              where += " AND (floor(extract(epoch from created_at) * 1000000)::bigint, id) < ($4::bigint, $5::uuid)";
             }
             values.push(limit + 1);
             const result = await client.query(
-              `SELECT id, project_id, template_id, display_name, state, expires_at, created_at
+              `SELECT id, project_id, template_id, display_name, state, expires_at, created_at,
+                     floor(extract(epoch from created_at) * 1000000)::bigint::text AS cursor_time
                FROM public.workspaces WHERE ${where}
                ORDER BY created_at DESC, id DESC LIMIT $${values.length}`,
               values
             );
             const hasMore = result.rows.length > limit;
-            const items = result.rows.slice(0, limit);
-            const last = items.at(-1);
+            const pageRows = result.rows.slice(0, limit);
+            const items = pageRows.map(({ cursor_time, ...row }) => row);
+            const last = pageRows.at(-1);
             return {
               items,
-              nextCursor: hasMore && last ? encodeCursor({ time: last.created_at.toISOString(), id: last.id }) : null
+              nextCursor: hasMore && last ? encodeCursor({ time: last.cursor_time, id: last.id }) : null
             };
           });
           status = 200;
@@ -199,10 +202,18 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
         }
 
         if (parts.length === 4 && parts[3] === "projects") {
-          const data = await withTenant(pool, principal, tenantId, async (client) => {
+          const data = await withTenant(pool, principal, tenantId, async (client, user, role) => {
+            const tenantWide = ["TENANT_OWNER", "TENANT_ADMIN", "AUDITOR"].includes(role);
             const result = await client.query(
-              "SELECT id, name, created_by, created_at, updated_at FROM public.projects WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
-              [tenantId]
+              `SELECT id, name, created_by, created_at, updated_at
+               FROM public.projects
+               WHERE tenant_id = $1
+                 AND ($2::boolean OR id IN (
+                   SELECT project_id FROM public.project_memberships
+                   WHERE tenant_id = $1 AND user_id = $3
+                 ))
+               ORDER BY created_at DESC LIMIT 100`,
+              [tenantId, tenantWide, user.id]
             );
             return { items: result.rows };
           });
@@ -220,21 +231,23 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
             let where = "tenant_id = $1";
             if (cursor) {
               values.push(cursor.time, cursor.id);
-              where += " AND (occurred_at, id) < ($2::timestamptz, $3::bigint)";
+              where += " AND (floor(extract(epoch from occurred_at) * 1000000)::bigint, id) < ($2::bigint, $3::bigint)";
             }
             values.push(limit + 1);
             const result = await client.query(
-              `SELECT id, actor_id, action, target_type, target_id, outcome, request_id, policy_version, metadata, occurred_at
+              `SELECT id, actor_id, action, target_type, target_id, outcome, request_id, policy_version, metadata, occurred_at,
+                     floor(extract(epoch from occurred_at) * 1000000)::bigint::text AS cursor_time
                FROM public.audit_events WHERE ${where}
                ORDER BY occurred_at DESC, id DESC LIMIT $${values.length}`,
               values
             );
             const hasMore = result.rows.length > limit;
-            const items = result.rows.slice(0, limit);
-            const last = items.at(-1);
+            const pageRows = result.rows.slice(0, limit);
+            const items = pageRows.map(({ cursor_time, ...row }) => row);
+            const last = pageRows.at(-1);
             return {
               items,
-              nextCursor: hasMore && last ? encodeCursor({ time: last.occurred_at.toISOString(), id: String(last.id) }) : null
+              nextCursor: hasMore && last ? encodeCursor({ time: last.cursor_time, id: String(last.id) }) : null
             };
           });
           status = 200;
