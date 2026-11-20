@@ -1,0 +1,44 @@
+name: CORNOD database security tests
+on:
+  push:
+    branches: ["cornod/control-plane-foundation"]
+    paths:
+      - "db/**"
+      - ".github/workflows/database-security.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "db/**"
+      - ".github/workflows/database-security.yml"
+permissions:
+  contents: read
+jobs:
+  postgres-rls:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: cornod_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cornod_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision restricted runtime role
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
+      - name: Apply schema migrations in order
+        env:
+          PGPASSWORD: test-only-password
+        run: for migration in db/migrations/*.sql; do psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -f "$migration"; done
+      - name: Verify tenant isolation and append-only permissions
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -f db/tests/rls-smoke.sql

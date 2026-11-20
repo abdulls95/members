@@ -19,12 +19,14 @@ The site is a static frontend preview only. It is not a private workspace or a p
 - Static validation and GitHub Actions quality checks.
 - Proposed control-plane API contract and OpenAPI description.
 - Proposed tenant authorization matrix and provider-neutral logical data model.
+- Executable PostgreSQL migrations for tenant-owned records, row-level security, short-lived terminal ticket scoping and append-only audit/usage permissions.
+- CI-backed PostgreSQL isolation smoke tests against an ephemeral database.
 - Architecture, threat model and release-blocking security checklist.
 
 ## Not implemented
 
 - No authentication, MFA or tenant accounts.
-- No database or persistent user/project storage.
+- No database has been provisioned or connected to a live service. The repository contains reviewed schema migrations and automated PostgreSQL security tests only.
 - No Linux runtime, isolated workspaces or executable terminal.
 - No tool installation or command execution.
 - No billing, metering service or production audit pipeline.
@@ -47,6 +49,7 @@ The interface deliberately does not simulate successful backend operations.
 - [OpenAPI v1](openapi/cornod-v1.yaml)
 - [Authorization matrix](docs/AUTHORIZATION-MATRIX.md)
 - [Logical data model](docs/DATA-MODEL.md)
+- [Database migrations and security model](db/README.md)
 - [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)
 - [Delivery roadmap](docs/ROADMAP.md)
 
