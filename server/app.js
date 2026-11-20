@@ -374,7 +374,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
           return;
         }
 
-        if (parts.length === 4 && parts[3] === "workspaces") {
+        if (parts.length === 4 && parts[3] === "workspaces" && request.method === "GET") {
           const limit = parseLimit(url.searchParams.get("limit"));
           const cursor = decodeCursor(url.searchParams.get("cursor"));
           const data = await withTenant(pool, principal, tenantId, async (client, user, role) => {
@@ -407,7 +407,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
           return;
         }
 
-        if (parts.length === 4 && parts[3] === "projects") {
+        if (parts.length === 4 && parts[3] === "projects" && request.method === "GET") {
           const data = await withTenant(pool, principal, tenantId, async (client, user, role) => {
             const tenantWide = ["TENANT_OWNER", "TENANT_ADMIN", "AUDITOR"].includes(role);
             const result = await client.query(
@@ -428,7 +428,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
           return;
         }
 
-        if (parts.length === 4 && parts[3] === "audit-events") {
+        if (parts.length === 4 && parts[3] === "audit-events" && request.method === "GET") {
           const limit = parseLimit(url.searchParams.get("limit"));
           const cursor = decodeCursor(url.searchParams.get("cursor"));
           const data = await withTenant(pool, principal, tenantId, async (client, user, role) => {
@@ -461,7 +461,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
           return;
         }
 
-        if (parts.length === 4 && parts[3] === "usage") {
+        if (parts.length === 4 && parts[3] === "usage" && request.method === "GET") {
           const data = await withTenant(pool, principal, tenantId, async (client, user, role) => {
             requireRole(role, privilegedReadRoles);
             const result = await client.query(
