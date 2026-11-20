@@ -80,6 +80,10 @@ BEGIN
      OR has_sequence_privilege('cornod_app', 'public.usage_ledger_id_seq', 'USAGE') THEN
     RAISE EXCEPTION 'API role can forge usage records or consume metering sequence';
   END IF;
+  IF NOT has_sequence_privilege('cornod_app', 'public.workspace_events_id_seq', 'USAGE')
+     OR NOT has_sequence_privilege('cornod_app', 'public.audit_events_id_seq', 'USAGE') THEN
+    RAISE EXCEPTION 'API role cannot write attributable audit or workspace events';
+  END IF;
   BEGIN
     INSERT INTO public.workspace_events (tenant_id, workspace_id, event_type, actor_id, request_id)
     VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', 'CREATED', '30000000-0000-4000-8000-000000000003', 'spoofed-event');
