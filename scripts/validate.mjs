@@ -1,0 +1,18 @@
+import { readFileSync, existsSync } from "node:fs";
+import { strict as assert } from "node:assert";
+const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const css = readFileSync(new URL("../assets/styles.css", import.meta.url), "utf8");
+const js = readFileSync(new URL("../assets/app.js", import.meta.url), "utf8");
+assert.match(html, /<html lang="ar" dir="rtl">/);
+assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/);
+assert.match(html, /assets\/styles\.css/);
+assert.match(html, /assets\/app\.js/);
+assert.match(html, /data-view="overview"/);
+assert.match(html, /data-view="terminal"/);
+assert.match(html, /executionDisabled/);
+assert.match(js, /COMMAND EXECUTION DISABLED/);
+assert.match(js, /function go\(page\)/);
+assert.ok(css.length > 3000, "Stylesheet unexpectedly small");
+assert.ok(!/service_role|sb_secret_|SUPABASE_SERVICE_ROLE_KEY/i.test(html + js + css), "Privileged backend secret pattern found in frontend");
+for (const path of ["docs/ARCHITECTURE.md","docs/THREAT-MODEL.md","docs/ROADMAP.md"]) assert.ok(existsSync(new URL("../"+path, import.meta.url)), path+" missing");
+console.log("CORNOD static checks passed.");
