@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { mkdtemp, mkdir, writeFile, rm, symlink, unlink } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, symlink, unlink, chmod } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FirecrackerApiClient, FirecrackerApiError } from "./firecracker-api.js";
@@ -104,6 +104,20 @@ test("Firecracker adapter rejects symlinked guest images", async () => {
     await assert.rejects(
       f.client.createWorkspace(f.spec),
       (error) => error instanceof FirecrackerApiError && error.code === "FIRECRACKER_KERNEL_IMAGE_INVALID"
+    );
+    assert.equal(f.requests.length, 0);
+  } finally {
+    await f.close();
+  }
+});
+
+test("Firecracker adapter rejects guest disks writable by host peers", async () => {
+  const f = await fixture();
+  try {
+    await chmod(join(f.jailRoot, "workspace.ext4"), 0o666);
+    await assert.rejects(
+      f.client.createWorkspace(f.spec),
+      (error) => error instanceof FirecrackerApiError && error.code === "FIRECRACKER_WORKSPACE_DISK_INVALID"
     );
     assert.equal(f.requests.length, 0);
   } finally {
