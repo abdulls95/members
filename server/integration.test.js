@@ -162,9 +162,9 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
 
   const ownerReplay = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest);
   assert.equal(ownerReplay.status, 200);
-  const ownerReplayBody = await ownerReplay.json();
-  assert.equal(ownerReplayBody.data.replayed, true);
-  assert.equal(ownerReplayBody.data.workspace.id, ownerCreateBody.data.workspace.id);
+  const ownerReplayAgainBody = await ownerReplay.json();
+  assert.equal(ownerReplayAgainBody.data.replayed, true);
+  assert.equal(ownerReplayAgainBody.data.workspace.id, ownerCreateBody.data.workspace.id);
 
   const idempotencyConflict = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", {
     ...ownerWorkspaceRequest, displayName: "Different Request"
