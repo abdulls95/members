@@ -18,6 +18,7 @@ INSERT INTO public.workspaces (id, tenant_id, project_id, template_id, template_
 VALUES ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'api-test-linux', 1, 'API Test Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour'),
        ('aaaaaaaa-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000002', 'api-test-linux', 1, 'Unassigned Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour');
 INSERT INTO public.audit_events (tenant_id, actor_id, action, target_type, target_id, outcome, request_id, policy_version)
-VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'workspace.read', 'workspace', 'aaaaaaaa-1111-4111-8111-111111111111', 'SUCCESS', 'api-test-request', 'test-v1');
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'workspace.read', 'workspace', 'aaaaaaaa-1111-4111-8111-111111111111', 'SUCCESS', 'api-test-request', 'test-v1'),
+       ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'project.list', 'project', 'aaaaaaaa-0000-4000-8000-000000000001', 'SUCCESS', 'api-test-request-2', 'test-v1');
 INSERT INTO public.usage_ledger (tenant_id, workspace_id, metric, quantity, unit, idempotency_key)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', 'cpu_seconds', 12.5, 'seconds', 'api-test-usage-1');
