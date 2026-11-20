@@ -13,6 +13,11 @@ for binary in firecracker jailer; do
   ok "$binary version $version"
 done
 
+firecracker_path="$(command -v firecracker)"
+command -v file >/dev/null 2>&1 || fail "file utility is required for static binary verification"
+file "$firecracker_path" | grep -q "statically linked" || fail "Firecracker binary must be the official statically linked build"
+ok "Firecracker binary is statically linked"
+
 [[ -c /dev/kvm ]] || fail "/dev/kvm is missing; hardware virtualization is unavailable"
 [[ -r /sys/fs/cgroup/cgroup.controllers ]] || fail "cgroup v2 is not mounted at /sys/fs/cgroup"
 ok "KVM device and cgroup v2 are present"
