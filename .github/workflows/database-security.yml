@@ -34,6 +34,10 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
+      - name: Provision isolated runtime worker role
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
       - name: Apply schema migrations in order
         env:
           PGPASSWORD: test-only-password
