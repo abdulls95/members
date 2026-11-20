@@ -98,6 +98,13 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   assert.equal(secondPageBody.data.items.length, 1);
   assert.notEqual(firstPageBody.data.items[0].id, secondPageBody.data.items[0].id);
 
+  const invalidMethod = await fetch(base + "/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + ownerToken, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  assert.equal(invalidMethod.status, 404);
+
   const projects = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", ownerToken);
   assert.equal((await projects.json()).data.items.length, 2);
 
