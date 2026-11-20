@@ -9,6 +9,8 @@ const openapi = read("openapi/cornod-v1.yaml");
 
 assert.match(html, /<html lang="ar" dir="rtl">/, "Arabic RTL must be the default");
 assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/, "Preview must discourage indexing");
+assert.match(html, /Content-Security-Policy/, "A restrictive frontend CSP must be present");
+assert.match(html, /name="referrer" content="strict-origin-when-cross-origin"/, "Referrer policy must be explicit");
 assert.match(html, /assets\/styles\.css/);
 assert.match(html, /assets\/app\.js/);
 assert.match(html, /data-view="overview"/);
