@@ -20,13 +20,6 @@ VALUES ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaa
 INSERT INTO public.tenant_quotas (tenant_id, max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 4, 4000, 4096, 8192, 2);
 
-INSERT INTO public.tenants (id, slug, display_name)
-VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'api-concurrency-tenant', 'API Concurrency Tenant');
-INSERT INTO public.memberships (tenant_id, user_id, role)
-VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', '10000000-0000-4000-8000-000000000001', 'TENANT_OWNER');
-INSERT INTO public.tenant_quotas (tenant_id, max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs)
-VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1, 1000, 1024, 2048, 1);
-
 INSERT INTO public.audit_events (tenant_id, actor_id, action, target_type, target_id, outcome, request_id, policy_version)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'workspace.read', 'workspace', 'aaaaaaaa-1111-4111-8111-111111111111', 'SUCCESS', 'api-test-request', 'test-v1'),
        ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'project.list', 'project', 'aaaaaaaa-0000-4000-8000-000000000001', 'SUCCESS', 'api-test-request-2', 'test-v1');
