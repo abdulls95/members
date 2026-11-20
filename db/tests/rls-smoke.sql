@@ -20,6 +20,9 @@ VALUES ('linux-base', 1, 'Pinned test template', 'starter', 'sha256:aaaaaaaaaaaa
 INSERT INTO public.workspaces (id, tenant_id, project_id, template_id, template_version, display_name, created_by, expires_at) VALUES
   ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'linux-base', 1, 'Alpha workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour'),
   ('bbbbbbbb-2222-4222-8222-222222222222', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'bbbbbbbb-0000-4000-8000-000000000002', 'linux-base', 1, 'Bravo workspace', '20000000-0000-4000-8000-000000000002', now() + interval '1 hour');
+INSERT INTO internal.workspace_jobs (tenant_id, workspace_id, action, state, idempotency_key, request_hash, requested_by) VALUES
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', 'CREATE', 'QUEUED', 'alpha-owner-job-key-0001', repeat('a', 64), '10000000-0000-4000-8000-000000000001'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', 'CREATE', 'QUEUED', 'alpha-developer-job-key-01', repeat('b', 64), '30000000-0000-4000-8000-000000000003');
 INSERT INTO public.terminal_tickets (tenant_id, workspace_id, user_id, ticket_hash, audience, origin, expires_at) VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', '10000000-0000-4000-8000-000000000001', decode(repeat('a1', 32), 'hex'), 'terminal-gateway', 'https://cornod.example.invalid', now() + interval '20 seconds'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', '30000000-0000-4000-8000-000000000003', decode(repeat('b2', 32), 'hex'), 'terminal-gateway', 'https://cornod.example.invalid', now() + interval '20 seconds');
@@ -42,6 +45,8 @@ BEGIN
   IF (SELECT count(*) FROM public.audit_events) <> 1 THEN RAISE EXCEPTION 'audit isolation failed'; END IF;
   IF (SELECT count(*) FROM public.users) <> 1 THEN RAISE EXCEPTION 'user self-access failed'; END IF;
   IF (SELECT count(*) FROM public.terminal_tickets) <> 1 THEN RAISE EXCEPTION 'terminal ticket owner isolation failed'; END IF;
+  IF (SELECT count(*) FROM internal.workspace_jobs) <> 1 THEN RAISE EXCEPTION 'workspace job requester isolation failed'; END IF;
+  IF has_table_privilege('cornod_app', 'internal.workspace_jobs', 'UPDATE') THEN RAISE EXCEPTION 'runtime app role can update jobs'; END IF;
   IF (SELECT count(*) FROM public.workspace_templates WHERE id = 'linux-base') <> 1 THEN RAISE EXCEPTION 'approved template catalog read failed'; END IF;
   IF has_table_privilege('cornod_app', 'public.memberships', 'UPDATE')
      OR has_table_privilege('cornod_app', 'public.memberships', 'INSERT')
@@ -76,11 +81,29 @@ END $$;
 ROLLBACK;
 RESET ROLE;
 
-DO $$
+SET ROLE cornod_worker;
+BEGIN;
+DO $
+BEGIN
+  IF (SELECT count(*) FROM internal.workspace_jobs) <> 2 THEN
+    RAISE EXCEPTION 'worker cannot see the full job queue';
+  END IF;
+  UPDATE internal.workspace_jobs SET state = 'CANCELLED', updated_at = now()
+  WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    AND requested_by = '30000000-0000-4000-8000-000000000003';
+  IF NOT FOUND THEN RAISE EXCEPTION 'worker cannot update a claimed job'; END IF;
+END $;
+ROLLBACK;
+RESET ROLE;
+
+DO $
 BEGIN
   IF (SELECT rolbypassrls OR rolsuper FROM pg_roles WHERE rolname = 'cornod_app') THEN
     RAISE EXCEPTION 'cornod_app must not bypass row-level security';
   END IF;
-END $$;
+  IF (SELECT rolbypassrls OR rolsuper FROM pg_roles WHERE rolname = 'cornod_worker') THEN
+    RAISE EXCEPTION 'cornod_worker must not bypass row-level security';
+  END IF;
+END $;
 
 SELECT 'CORNOD database isolation smoke tests passed' AS result;
