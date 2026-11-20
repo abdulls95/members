@@ -44,8 +44,8 @@ async function resolveUser(client, principal) {
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (oidc_issuer, oidc_subject)
      DO UPDATE SET
-       email = COALESCE(EXCLUDED.email, public.users.email),
-       display_name = COALESCE(EXCLUDED.display_name, public.users.display_name),
+       email = COALESCE(EXCLUDED.email, users.email),
+       display_name = COALESCE(EXCLUDED.display_name, users.display_name),
        updated_at = now()
      RETURNING id, email, display_name`,
     [principal.issuer, principal.subject, principal.email, principal.displayName]
