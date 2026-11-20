@@ -22,17 +22,21 @@
 - [x] Add signed-token + PostgreSQL integration tests for tenant boundaries and role enforcement.
 - [x] Enforce project-assignment visibility for operators/developers and restrict assignment rows to the assigned user.
 - [x] Add microsecond-safe keyset pagination tests for workspace and audit feeds.
-- [ ] Implement browser Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies.
+- [x] Implement OIDC access-token verification for the API; browser Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies remain open.
 - [ ] Implement tenant membership administration through separately reviewed privileged procedures.
 - [x] Implement tenant-scoped API reads and quota-aware workspace request queuing with idempotency.
-- [ ] Add CSRF/CORS policy, rate limits, idempotency and session revocation.
+- [x] Add a separate worker-role queue lease library with hashed one-time lease tokens, renewal, completion, bounded retries and expiry handling.
+- [x] Add exact-origin CORS checks, request-size limits, bounded in-process rate limiting and idempotent workspace request handling.
+- [ ] Add production gateway rate limits, CSRF protections for the future cookie session and session revocation.
 - [ ] Configure managed secret storage and isolated development/staging/production environments.
-- [ ] Add append-only audit events and retention controls.
+- [x] Add actor-attributed append-only audit writes for workspace creation requests.
+- [ ] Add production audit export, retention controls and tamper-evident archival.
 
 ## Phase 2 — Isolated execution
 - [ ] Select microVM or equivalently strong runtime isolation and hardened base images.
 - [x] Add a typed, quota-aware workspace request API and idempotent job queue.
-- [ ] Build an orchestrator with typed, allowlisted operations only.
+- [x] Define typed, allowlisted workspace request operations and a database queue.
+- [ ] Build the trusted orchestrator and runtime adapter; queue lease primitives exist but do not launch workloads.
 - [ ] Implement quotas, TTLs, lifecycle cleanup and quarantine.
 - [ ] Build a terminal gateway with one-time short-lived attachment tickets.
 - [ ] Implement default-deny network egress and cloud metadata protections.
@@ -55,4 +59,4 @@
 
 ## Current reality
 
-The checked-in frontend is a static prototype. The API and OpenAPI files are proposed contracts, not deployed services. There is no authentication, database connection, runtime, real terminal, billing or deployed security boundary yet. Do not treat the prototype or its design documents as a production service.
+The checked-in frontend is a static prototype. The API service, PostgreSQL migrations and worker queue lease library are executable code with CI coverage, but they are not deployed. The API can verify externally issued OIDC access tokens when configured; no identity provider, user-facing login/BFF, managed database, API host, background worker or isolated runtime has been provisioned. There is no real Linux terminal, billing service or production security boundary. A queued request is not a running machine.
