@@ -32,6 +32,6 @@ The queue is currently not consumed by a deployed worker. A `QUEUED` job does no
 
 ## Apply and test
 
-Apply `migrations/0001_initial.sql through 0006_workspace_actor_scope.sql` through `0005_workspace_job_queue.sql` using a migration-owner account after provisioning both roles. Never run migrations with the runtime role.
+Apply migrations `0001_initial.sql` through `0006_workspace_actor_scope.sql` in numeric order using a migration-owner account after provisioning both roles. Migration `0007_restrict_api_sequences.sql` narrows the API role's sequence access. Never run migrations with the runtime role.
 
 CI applies all migrations to an ephemeral PostgreSQL 16 instance and tests tenant isolation, user-scoped membership/project/ticket/job visibility, worker-only queue access, append-only audit/usage records, and authenticated API behavior.
