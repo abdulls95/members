@@ -22,7 +22,7 @@ For each request, the trusted API must:
 5. For membership administration only, set transaction-local `cornod.membership_manage = 'true'` after verifying the caller is `TENANT_OWNER` or `TENANT_ADMIN`.
 6. Perform parameterized SQL only, enforce action-level role checks, and commit or roll back.
 
-The custom settings are transaction-local so pooled connections cannot retain one request's tenant context for another request. Ordinary members can read only their own active membership rows. The general runtime role has no membership write privileges; invitations, role changes and revocations remain disabled until a separately reviewed administrative procedure exists. RLS is defense in depth; it does not replace API authorization or safe parameterized queries. Do not expose a database connection to browsers.
+The custom settings are transaction-local so pooled connections cannot retain one request's tenant context for another request. Ordinary members can read only their own active membership rows and their own project assignments. The general runtime role has no membership or project-assignment write privileges; invitations, role changes, revocations and assignment changes remain disabled until separately reviewed administrative procedures exist. RLS is defense in depth; it does not replace API authorization or safe parameterized queries. Do not expose a database connection to browsers.
 
 ## Apply
 
