@@ -13,7 +13,7 @@ BEGIN
   IF p_lease_token_hash IS NULL OR octet_length(p_lease_token_hash) <> 32 THEN
     RAISE EXCEPTION 'lease token hash must be 32 bytes' USING ERRCODE = '22023';
   END IF;
-  IF p_lease_seconds < 10 OR p_lease_seconds > 120 THEN
+  IF p_lease_seconds IS NULL OR p_lease_seconds < 10 OR p_lease_seconds > 120 THEN
     RAISE EXCEPTION 'lease duration must be between 10 and 120 seconds' USING ERRCODE = '22023';
   END IF;
 
