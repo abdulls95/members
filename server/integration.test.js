@@ -58,6 +58,17 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   async function get(path, jwt) {
     return fetch(base + path, { headers: { Authorization: "Bearer " + jwt } });
   }
+  async function post(path, jwt, idempotencyKey, body) {
+    return fetch(base + path, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + jwt,
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey
+      },
+      body: JSON.stringify(body)
+    });
+  }
 
   t.after(async () => {
     await new Promise((resolve) => server.close(resolve));
@@ -116,6 +127,55 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   assert.equal((await developerWorkspaces.json()).data.items.length, 1);
   const developerAudit = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events", developerToken);
   assert.equal(developerAudit.status, 403);
+
+  const tenantPath = "/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const ownerWorkspaceRequest = {
+    templateId: "api-test-linux",
+    displayName: "Queued Owner Workspace",
+    resourceProfile: "starter",
+    projectId: "aaaaaaaa-0000-4000-8000-000000000001"
+  };
+  const ownerCreate = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest);
+  assert.equal(ownerCreate.status, 202);
+  const ownerCreateBody = await ownerCreate.json();
+  assert.equal(ownerCreateBody.data.workspace.state, "REQUESTED");
+  assert.equal(ownerCreateBody.data.job.state, "QUEUED");
+  assert.equal(ownerCreateBody.data.replayed, false);
+
+  const jobStatus = await get(tenantPath + "/workspace-jobs/" + ownerCreateBody.data.job.id, ownerToken);
+  assert.equal(jobStatus.status, 200);
+  assert.equal((await jobStatus.json()).data.job.state, "QUEUED");
+
+  const ownerReplay = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest);
+  assert.equal(ownerReplay.status, 200);
+  const ownerReplayBody = await ownerReplay.json();
+  assert.equal(ownerReplayBody.data.replayed, true);
+  assert.equal(ownerReplayBody.data.workspace.id, ownerCreateBody.data.workspace.id);
+
+  const idempotencyConflict = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", {
+    ...ownerWorkspaceRequest, displayName: "Different Request"
+  });
+  assert.equal(idempotencyConflict.status, 409);
+
+  const developerWorkspaceRequest = {
+    templateId: "api-test-linux",
+    displayName: "Developer Assigned Workspace",
+    resourceProfile: "starter",
+    projectId: "aaaaaaaa-0000-4000-8000-000000000001"
+  };
+  const developerCreate = await post(tenantPath + "/workspaces", developerToken, "developer-create-workspace-0001", developerWorkspaceRequest);
+  assert.equal(developerCreate.status, 202);
+  assert.equal((await developerCreate.json()).data.job.state, "QUEUED");
+
+  const developerUnassignedProject = await post(tenantPath + "/workspaces", developerToken, "developer-create-workspace-0002", {
+    ...developerWorkspaceRequest, displayName: "Forbidden Project Workspace", projectId: "aaaaaaaa-0000-4000-8000-000000000002"
+  });
+  assert.equal(developerUnassignedProject.status, 403);
+
+  const quotaExceeded = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0002", {
+    ...ownerWorkspaceRequest, displayName: "Quota Overflow Workspace"
+  });
+  assert.equal(quotaExceeded.status, 429);
 
   const wrongScope = await token("api-test-owner", "openid profile");
   const denied = await get("/v1/me", wrongScope);
