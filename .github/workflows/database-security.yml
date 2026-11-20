@@ -29,7 +29,7 @@ jobs:
           --health-timeout 5s
           --health-retries 12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Provision restricted runtime role
         env:
           PGPASSWORD: test-only-password
