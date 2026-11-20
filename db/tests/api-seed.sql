@@ -14,9 +14,9 @@ INSERT INTO public.project_memberships (tenant_id, project_id, user_id, role)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000003', 'DEVELOPER');
 INSERT INTO public.workspace_templates (id, version, description, resource_profile, image_digest, active)
 VALUES ('api-test-linux', 1, 'CI test template', 'starter', 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', true);
-INSERT INTO public.workspaces (id, tenant_id, project_id, template_id, template_version, display_name, created_by, expires_at)
-VALUES ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'api-test-linux', 1, 'API Test Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour', 'READY'),
-       ('aaaaaaaa-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000002', 'api-test-linux', 1, 'Unassigned Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour', 'READY');
+INSERT INTO public.workspaces (id, tenant_id, project_id, template_id, template_version, display_name, created_by, expires_at, state, resource_profile)
+VALUES ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'api-test-linux', 1, 'API Test Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour', 'READY', 'starter'),
+       ('aaaaaaaa-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000002', 'api-test-linux', 1, 'Unassigned Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour', 'READY', 'starter');
 INSERT INTO public.tenant_quotas (tenant_id, max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 4, 4000, 4096, 8192, 2);
 
