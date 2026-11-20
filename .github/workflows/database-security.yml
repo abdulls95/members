@@ -1,7 +1,7 @@
 name: CORNOD database security tests
 on:
   push:
-    branches: ["cornod/control-plane-foundation", "cornod/workspace-queue-foundation", "cornod/security-review-round2"]
+    branches: ["cornod/control-plane-foundation", "cornod/workspace-queue-foundation"]
     paths:
       - "db/**"
       - ".github/workflows/database-security.yml"
