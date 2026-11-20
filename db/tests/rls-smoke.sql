@@ -104,6 +104,12 @@ BEGIN
   IF (SELECT rolbypassrls OR rolsuper FROM pg_roles WHERE rolname = 'cornod_worker') THEN
     RAISE EXCEPTION 'cornod_worker must not bypass row-level security';
   END IF;
+  IF NOT has_column_privilege('cornod_worker', 'internal.workspace_jobs', 'state', 'UPDATE')
+     OR has_column_privilege('cornod_worker', 'internal.workspace_jobs', 'request_hash', 'UPDATE')
+     OR has_column_privilege('cornod_worker', 'public.workspaces', 'display_name', 'UPDATE')
+     OR NOT has_column_privilege('cornod_worker', 'public.workspaces', 'state', 'UPDATE') THEN
+    RAISE EXCEPTION 'worker column privileges are not sufficiently restricted';
+  END IF;
 END $;
 
 SELECT 'CORNOD database isolation smoke tests passed' AS result;
