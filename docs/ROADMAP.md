@@ -20,6 +20,8 @@
 - [ ] Require MFA for privileged roles and document secure account recovery.
 - [x] Implement read-only OIDC access-token verification, current-user and tenant-scoped query routes with role-gated audit/usage reads.
 - [x] Add signed-token + PostgreSQL integration tests for tenant boundaries and role enforcement.
+- [x] Enforce project-assignment visibility for operators/developers and restrict assignment rows to the assigned user.
+- [x] Add microsecond-safe keyset pagination tests for workspace and audit feeds.
 - [ ] Implement browser Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies.
 - [ ] Implement tenant membership administration through separately reviewed privileged procedures.
 - [ ] Implement the API contract with object-level authorization on every route.

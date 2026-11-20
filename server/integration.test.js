@@ -75,12 +75,32 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   const workspaces = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", ownerToken);
   assert.equal(workspaces.status, 200);
   const workspaceBody = await workspaces.json();
-  assert.equal(workspaceBody.data.items.length, 1);
-  assert.equal(workspaceBody.data.items[0].display_name, "API Test Workspace");
+  assert.equal(workspaceBody.data.items.length, 2);
+  assert.ok(workspaceBody.data.items.some((item) => item.display_name === "API Test Workspace"));
+
+  const firstPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces?limit=1", ownerToken);
+  const firstPageBody = await firstPage.json();
+  assert.equal(firstPageBody.data.items.length, 1);
+  assert.ok(firstPageBody.data.nextCursor);
+  const secondPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces?limit=1&cursor=" + encodeURIComponent(firstPageBody.data.nextCursor), ownerToken);
+  const secondPageBody = await secondPage.json();
+  assert.equal(secondPageBody.data.items.length, 1);
+  assert.notEqual(firstPageBody.data.items[0].id, secondPageBody.data.items[0].id);
+
+  const projects = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", ownerToken);
+  assert.equal((await projects.json()).data.items.length, 2);
 
   const audit = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events", ownerToken);
   assert.equal(audit.status, 200);
-  assert.equal((await audit.json()).data.items.length, 1);
+  assert.equal((await audit.json()).data.items.length, 2);
+  const firstAuditPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events?limit=1", ownerToken);
+  const firstAuditBody = await firstAuditPage.json();
+  assert.equal(firstAuditBody.data.items.length, 1);
+  assert.ok(firstAuditBody.data.nextCursor);
+  const secondAuditPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events?limit=1&cursor=" + encodeURIComponent(firstAuditBody.data.nextCursor), ownerToken);
+  const secondAuditBody = await secondAuditPage.json();
+  assert.equal(secondAuditBody.data.items.length, 1);
+  assert.notEqual(firstAuditBody.data.items[0].id, secondAuditBody.data.items[0].id);
 
   const usage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/usage", ownerToken);
   assert.equal(usage.status, 200);
@@ -90,6 +110,10 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   assert.equal(otherTenant.status, 404);
 
   const developerToken = await token("api-test-developer");
+  const developerProjects = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", developerToken);
+  assert.equal((await developerProjects.json()).data.items.length, 1);
+  const developerWorkspaces = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", developerToken);
+  assert.equal((await developerWorkspaces.json()).data.items.length, 1);
   const developerAudit = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events", developerToken);
   assert.equal(developerAudit.status, 403);
 

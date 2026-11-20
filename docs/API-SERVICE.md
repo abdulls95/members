@@ -20,6 +20,8 @@ The API verifies signed OIDC access tokens using the configured issuer, audience
 
 ## Database context
 
+Project visibility is role-aware: tenant owners, tenant admins and auditors can read the tenant's full project/workspace inventory; operators and developers see only projects assigned to them and workspaces they created or whose projects they are assigned to. Audit and usage reads remain restricted to owner/admin/auditor.
+
 Every authenticated request opens a transaction and sets the verified OIDC issuer/subject. The API resolves the internal user row, sets the internal user UUID, and for tenant routes sets the tenant UUID only after checking an active membership. All SQL values are parameterized. The transaction is committed or rolled back before the pooled connection is released.
 
 The runtime role must be a non-owner, non-superuser, `NOBYPASSRLS` role. The SQL custom settings are trusted only because the database connection is private to the API. Never allow tenant workloads or browsers to connect directly to PostgreSQL.
