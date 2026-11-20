@@ -177,6 +177,19 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   });
   assert.equal(quotaExceeded.status, 429);
 
+  // Concurrent requests must not both pass a one-workspace tenant quota.
+  const concurrencyPath = "/v1/tenants/cccccccc-cccc-4ccc-8ccc-cccccccccccc/workspaces";
+  const concurrentResults = await Promise.all([
+    post(concurrencyPath, ownerToken, "concurrent-workspace-request-0001", {
+      templateId: "api-test-linux", displayName: "Concurrent A", resourceProfile: "starter"
+    }),
+    post(concurrencyPath, ownerToken, "concurrent-workspace-request-0002", {
+      templateId: "api-test-linux", displayName: "Concurrent B", resourceProfile: "starter"
+    })
+  ]);
+  const concurrentStatuses = concurrentResults.map((response) => response.status).sort((a, b) => a - b);
+  assert.deepEqual(concurrentStatuses, [202, 429]);
+
   const wrongScope = await token("api-test-owner", "openid profile");
   const denied = await get("/v1/me", wrongScope);
   assert.equal(denied.status, 401);
