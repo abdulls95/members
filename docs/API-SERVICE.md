@@ -55,4 +55,8 @@ See `docs/WORKER-QUEUE.md` for the queue protocol and runtime boundary. The work
 ## Queue claim and sequence privileges
 
 The worker role claims jobs through `internal.claim_next_workspace_job(bytea, integer)`. Execute permission is revoked from `PUBLIC` and `cornod_app`; only `cornod_worker` can call it. The API role's broad initial sequence grant is narrowed by migration `0008` to the workspace-event and audit-event sequences only.
-\n\n## Firecracker runtime adapter\n\nThe tested Firecracker API client sends an allowlisted configuration sequence through the per-VM Unix socket. It never spawns a process or accepts a shell command. The Jailer supervisor, network/volume allocators, guest agent and deployed worker are not implemented yet. See `docs/FIRECRACKER-RUNTIME.md`.\n
+
+
+## Firecracker runtime adapter
+
+The tested Firecracker API client sends an allowlisted configuration sequence through the per-VM Unix socket. It never spawns a process or accepts a shell command. The Jailer supervisor, network/volume allocators, guest agent and deployed worker are not implemented yet. See `docs/FIRECRACKER-RUNTIME.md`.
