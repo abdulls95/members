@@ -276,7 +276,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
       }
       response.setHeader("Access-Control-Allow-Origin", origin);
       response.setHeader("Vary", "Origin");
-      response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+      response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key");
       response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
       response.setHeader("Access-Control-Max-Age", "600");
     }
