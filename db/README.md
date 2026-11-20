@@ -1,33 +1,37 @@
 # CORNOD PostgreSQL foundation
 
-This directory contains the first executable persistence layer for CORNOD. It is a schema migration and a PostgreSQL row-level-security smoke test, not a deployed database.
+This directory contains executable PostgreSQL migrations and RLS tests. It is a schema foundation, not a deployed database.
 
-## Database role
+## Database roles
 
-Provision a dedicated runtime role before applying migrations:
+Provision separate roles before applying migrations:
 
 ```sql
 CREATE ROLE cornod_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;
+CREATE ROLE cornod_worker LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;
 ```
 
-The role must not own tables, be a member of a privileged role, or be shared with a browser or tenant workload. The migration grants only the operations currently needed by the proposed control plane. Audit and usage records are append-only for this role.
+Use separate strong credentials from a secret manager. The API role can read tenant data and create typed workspace requests, but cannot update queue state, change membership or alter project assignments. The worker role can claim/update queue jobs and update only the approved workspace lifecycle columns. Neither role owns tables or bypasses RLS.
 
-## Transaction context
+## API transaction context
 
-For each request, the trusted API must:
-1. Validate the OIDC token against the configured issuer and audience.
-2. Resolve the active tenant membership and permissions server-side.
+For each API request, the trusted service must:
+1. Validate the OIDC access token against the configured issuer, audience, JWKS and required API scope.
+2. Resolve the active tenant membership and project assignment server-side.
 3. Open a database transaction.
-4. Set `SET LOCAL cornod.user_id = '<verified-user-uuid>'` and `SET LOCAL cornod.tenant_id = '<authorized-tenant-uuid>'`.
-5. For membership administration only, set transaction-local `cornod.membership_manage = 'true'` after verifying the caller is `TENANT_OWNER` or `TENANT_ADMIN`.
-6. Perform parameterized SQL only, enforce action-level role checks, and commit or roll back.
+4. Set transaction-local `cornod.oidc_issuer`, `cornod.oidc_subject`, `cornod.user_id` and, for tenant routes, `cornod.tenant_id`.
+5. Use parameterized SQL, enforce action-level role checks and commit or roll back.
 
-The custom settings are transaction-local so pooled connections cannot retain one request's tenant context for another request. Ordinary members can read only their own active membership rows and their own project assignments. The general runtime role has no membership or project-assignment write privileges; invitations, role changes, revocations and assignment changes remain disabled until separately reviewed administrative procedures exist. RLS is defense in depth; it does not replace API authorization or safe parameterized queries. Do not expose a database connection to browsers.
+The general API role has no membership or project-assignment write privileges. Invitations, role changes, revocations and assignment changes remain disabled until separately reviewed administrative procedures exist. API-created workspaces must use the authenticated user as `created_by`; audit/event inserts must identify the verified actor.
 
-## Apply
+## Worker boundary
 
-Apply `migrations/0001_initial.sql` using a migration owner account after provisioning `cornod_app`. Run migrations through a reviewed deployment pipeline. Do not run the migration with the runtime application role.
+The worker connects only with `cornod_worker`. Its queue policy allows that database role to claim jobs across tenants; it still does not bypass RLS. Before reading or updating a tenant workspace, it must set the tenant context from the claimed, server-generated job row. It must resolve templates and resource profiles from the server-owned catalog and reject arbitrary image names, shell strings, mounts, capabilities, devices and network settings from tenant input.
 
-## Tests
+The queue is currently not consumed by a deployed worker. A `QUEUED` job does not mean a workspace is running. The worker must eventually use short leases, bounded retries, idempotent transitions, a kill switch and a strongly isolated microVM runtime.
 
-`tests/rls-smoke.sql` seeds two isolated tenants, switches to the restricted runtime role, and verifies tenant scoping plus append-only audit/usage permissions. CI runs this test against an ephemeral PostgreSQL service. It does not use a production database or secrets.
+## Apply and test
+
+Apply `migrations/0001_initial.sql through 0006_workspace_actor_scope.sql` through `0005_workspace_job_queue.sql` using a migration-owner account after provisioning both roles. Never run migrations with the runtime role.
+
+CI applies all migrations to an ephemeral PostgreSQL 16 instance and tests tenant isolation, user-scoped membership/project/ticket/job visibility, worker-only queue access, append-only audit/usage records, and authenticated API behavior.

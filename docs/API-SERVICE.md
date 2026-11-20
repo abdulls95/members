@@ -1,30 +1,46 @@
 # CORNOD API service
 
-**Status:** executable read-only API foundation; not deployed and not connected to a live database or identity provider.
+**Status:** executable API foundation with authenticated read routes and quota-aware workspace request queuing. It is not deployed or connected to a live database or identity provider.
 
 ## Included routes
 
 - `GET /health/live` — process liveness.
 - `GET /health/ready` — database readiness.
 - `GET /v1/me` — verified identity and active tenant memberships.
-- `GET /v1/tenants/{tenantId}/projects` — tenant projects.
-- `GET /v1/tenants/{tenantId}/workspaces` — workspace metadata with bounded cursor pagination.
+- `GET /v1/tenants/{tenantId}/projects` — projects visible to the caller.
+- `GET /v1/tenants/{tenantId}/workspaces` — visible workspace metadata with bounded cursor pagination.
+- `POST /v1/tenants/{tenantId}/workspaces` — request a workspace from an approved server-side template.
+- `GET /v1/tenants/{tenantId}/workspace-jobs/{jobId}` — status of the caller's queued workspace request.
 - `GET /v1/tenants/{tenantId}/audit-events` — owner/admin/auditor only.
 - `GET /v1/tenants/{tenantId}/usage` — owner/admin/auditor only.
 
-No write, provisioning, terminal, or shell-execution routes are exposed. Those remain disabled until the identity administration path, orchestration boundary and isolated runtime have passed their security tests.
+## Workspace request safety
+
+The create endpoint accepts only `templateId`, `displayName`, `resourceProfile` and an optional authorized `projectId`. Unknown fields such as commands, image names, mounts, network settings or runtime flags are rejected. The server resolves active templates and resource profiles from its own catalog, checks project assignment and tenant quotas, and requires an idempotency key.
+
+A successful request creates a workspace in `REQUESTED` state and a queue record in `QUEUED` state in one database transaction. Repeated idempotency keys replay the original result; reusing a key with a different request is rejected. The worker role is separate from the API role and cannot bypass RLS.
+
+**Important:** the queue is not yet consumed by a runtime worker. A queued request is not a running Linux machine. No shell or terminal endpoint exists, and the workspace will remain requested until the isolated runtime worker is implemented and deployed.
+
+## Workspace request safety
+
+The create endpoint accepts only `templateId`, `displayName`, `resourceProfile` and an optional authorized `projectId`. Unknown fields such as commands, image names, mounts, network settings or runtime flags are rejected. The server resolves active templates and resource profiles from its own catalog, checks project assignment and tenant quotas, and requires an idempotency key.
+
+A successful request creates a workspace in `REQUESTED` state and a queue record in `QUEUED` state in one database transaction. Repeated idempotency keys replay the original result; reusing a key with a different request is rejected. The worker role is separate from the API role and cannot bypass RLS.
+
+**Important:** the queue is not yet consumed by a runtime worker. A queued request is not a running Linux machine. No shell or terminal endpoint exists, and the workspace will remain requested until the isolated runtime worker is implemented and deployed.
 
 ## Authentication
 
 The API verifies signed OIDC access tokens using the configured issuer, audience, remote JWKS endpoint and required `cornod:api` scope. It accepts only RS256 or ES256 signatures and rejects expired or over-age tokens. The browser must never store access or refresh tokens in localStorage, sessionStorage, URLs or logs. A production browser login should use Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies; the current API bearer adapter is an internal service foundation, not the final browser session design.
 
-## Database context
+## Database context and roles
 
-Project visibility is role-aware: tenant owners, tenant admins and auditors can read the tenant's full project/workspace inventory; operators and developers see only projects assigned to them and workspaces they created or whose projects they are assigned to. Audit and usage reads remain restricted to owner/admin/auditor.
+Every authenticated request opens a transaction, sets the verified OIDC issuer/subject, resolves the internal user row and sets the user UUID. Tenant routes set the tenant UUID only after checking active membership. All SQL values are parameterized.
 
-Every authenticated request opens a transaction and sets the verified OIDC issuer/subject. The API resolves the internal user row, sets the internal user UUID, and for tenant routes sets the tenant UUID only after checking an active membership. All SQL values are parameterized. The transaction is committed or rolled back before the pooled connection is released.
-
-The runtime role must be a non-owner, non-superuser, `NOBYPASSRLS` role. The SQL custom settings are trusted only because the database connection is private to the API. Never allow tenant workloads or browsers to connect directly to PostgreSQL.
+- `cornod_app` serves the API and can create typed workspace requests, but cannot update queue state, modify memberships or change project assignments.
+- `cornod_worker` is a separate trusted service role. It can claim/update queue records and update workspace lifecycle metadata, but is not a superuser and does not have `BYPASSRLS`.
+- Neither role is shared with a browser or tenant workload. Never expose PostgreSQL directly.
 
 ## Runtime configuration
 
@@ -32,9 +48,9 @@ Copy `.env.example` to a private environment configuration and supply real value
 
 ## Current limits
 
-- The service is read-only and has no tenant invite or role-change endpoint.
 - No identity provider has been selected or configured.
-- No managed PostgreSQL database or API hosting has been provisioned.
+- No managed PostgreSQL database, API host or runtime worker has been provisioned.
+- The queue schema and API request path exist, but there is no worker that consumes jobs or launches microVMs.
+- No terminal gateway, tool execution, start/stop actions or public signup exists.
 - The in-process IP rate limiter is a development guardrail; production needs gateway/WAF rate limits shared across replicas.
-- No terminal gateway or workload orchestrator exists yet.
-- The Dockerfile installs exact top-level dependency versions, but a committed npm lockfile and dependency provenance review are required before production deployment.
+- A committed npm lockfile and dependency provenance review remain production gates.

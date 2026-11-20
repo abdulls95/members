@@ -1,7 +1,7 @@
 name: CORNOD API quality checks
 on:
   push:
-    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline"]
+    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline", "cornod/workspace-queue-foundation", "cornod/security-review-round2"]
     paths:
       - "server/**"
       - "db/**"
@@ -49,6 +49,10 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_app LOGIN PASSWORD 'test-only-password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
+      - name: Provision isolated runtime worker role
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
       - name: Apply schema migrations
         env:
           PGPASSWORD: test-only-password

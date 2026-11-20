@@ -14,9 +14,19 @@ INSERT INTO public.project_memberships (tenant_id, project_id, user_id, role)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000003', 'DEVELOPER');
 INSERT INTO public.workspace_templates (id, version, description, resource_profile, image_digest, active)
 VALUES ('api-test-linux', 1, 'CI test template', 'starter', 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', true);
-INSERT INTO public.workspaces (id, tenant_id, project_id, template_id, template_version, display_name, created_by, expires_at)
-VALUES ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'api-test-linux', 1, 'API Test Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour'),
-       ('aaaaaaaa-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000002', 'api-test-linux', 1, 'Unassigned Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour');
+INSERT INTO public.workspaces (id, tenant_id, project_id, template_id, template_version, display_name, created_by, expires_at, state, resource_profile)
+VALUES ('aaaaaaaa-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'api-test-linux', 1, 'API Test Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour', 'READY', 'starter'),
+       ('aaaaaaaa-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000002', 'api-test-linux', 1, 'Unassigned Workspace', '10000000-0000-4000-8000-000000000001', now() + interval '1 hour', 'READY', 'starter');
+INSERT INTO public.tenant_quotas (tenant_id, max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs)
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 4, 4000, 4096, 8192, 2);
+
+INSERT INTO public.tenants (id, slug, display_name)
+VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'api-concurrency-tenant', 'API Concurrency Tenant');
+INSERT INTO public.memberships (tenant_id, user_id, role)
+VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', '10000000-0000-4000-8000-000000000001', 'TENANT_OWNER');
+INSERT INTO public.tenant_quotas (tenant_id, max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs)
+VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1, 1000, 1024, 2048, 1);
+
 INSERT INTO public.audit_events (tenant_id, actor_id, action, target_type, target_id, outcome, request_id, policy_version)
 VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'workspace.read', 'workspace', 'aaaaaaaa-1111-4111-8111-111111111111', 'SUCCESS', 'api-test-request', 'test-v1'),
        ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '10000000-0000-4000-8000-000000000001', 'project.list', 'project', 'aaaaaaaa-0000-4000-8000-000000000001', 'SUCCESS', 'api-test-request-2', 'test-v1');

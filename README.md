@@ -27,7 +27,7 @@ The site is a static frontend preview only. It is not a private workspace or a p
 
 - No identity provider, browser login, MFA enrollment or live tenant accounts have been configured. The repository now contains an OIDC-verifying, read-only API service foundation.
 - No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
-- No Linux runtime, isolated workspaces or executable terminal.
+- No Linux runtime, isolated workspaces or executable terminal. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job; no worker launches it yet.
 - No tool installation or command execution.
 - No billing, metering service or production audit pipeline.
 

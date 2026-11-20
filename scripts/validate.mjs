@@ -37,7 +37,8 @@ assert.doesNotMatch(html, /<script[^>]+src=["']https?:\/\//i, "Frontend must not
 assert.doesNotMatch(html + js + css, /service_role|sb_secret_|SUPABASE_SERVICE_ROLE_KEY|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/i, "Privileged secret pattern found in frontend");
 assert.match(openapi, /^openapi: 3[.]1[.]0/m, "OpenAPI contract must declare version 3.1.0");
 assert.match(openapi, /additionalProperties: false/, "Request schemas must explicitly reject unknown fields");
-assert.match(openapi, /terminal-tickets/, "Terminal ticket contract is missing");
+assert.match(openapi, /workspace-jobs/, "Workspace job status contract is missing");
+assert.match(openapi, /bearerAuth/, "OpenAPI must match OIDC bearer authentication");
 for (const path of ["docs/ARCHITECTURE.md", "docs/THREAT-MODEL.md", "docs/ROADMAP.md", "docs/API-CONTRACT.md", "docs/AUTHORIZATION-MATRIX.md", "docs/DATA-MODEL.md", "docs/SECURITY-ACCEPTANCE.md"]) {
   assert.ok(existsSync(new URL("../" + path, import.meta.url)), path + " missing");
 }
