@@ -20,14 +20,18 @@ ok "Firecracker binary is statically linked"
 
 [[ -c /dev/kvm ]] || fail "/dev/kvm is missing; hardware virtualization is unavailable"
 [[ -r /sys/fs/cgroup/cgroup.controllers ]] || fail "cgroup v2 is not mounted at /sys/fs/cgroup"
-ok "KVM device and cgroup v2 are present"
+controllers="$(cat /sys/fs/cgroup/cgroup.controllers)"
+for controller in cpu memory io pids; do
+  [[ " $controllers " == *" $controller "* ]] || fail "cgroup v2 controller $controller is unavailable"
+done
+ok "KVM device and required cgroup v2 controllers are present"
 
 getent passwd cornod-vmm >/dev/null 2>&1 || fail "dedicated cornod-vmm user is missing"
 getent group cornod-vmm >/dev/null 2>&1 || fail "dedicated cornod-vmm group is missing"
 ok "dedicated unprivileged VMM identity exists"
 
 for directory in /srv/jailer /var/lib/cornod /var/lib/cornod/templates; do
-  [[ -d "$directory" ]] || fail "required directory is missing: $directory"
+  [[ -d "$directory" && ! -L "$directory" ]] || fail "required directory is missing or symlinked: $directory"
   owner="$(stat -c '%U' "$directory")"
   [[ "$owner" == "root" ]] || fail "$directory must be owned by root"
   mode="$(stat -c '%a' "$directory")"
