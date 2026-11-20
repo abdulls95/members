@@ -210,7 +210,7 @@ GRANT SELECT, INSERT, UPDATE ON public.users TO cornod_app;
 GRANT SELECT, INSERT, UPDATE ON public.tenants TO cornod_app;
 GRANT SELECT ON public.memberships TO cornod_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.projects TO cornod_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_memberships TO cornod_app;
+GRANT SELECT ON public.project_memberships TO cornod_app;
 GRANT SELECT ON public.workspace_templates TO cornod_app;
 GRANT SELECT, INSERT ON public.workspaces TO cornod_app;
 GRANT SELECT, INSERT ON public.workspace_events TO cornod_app;
