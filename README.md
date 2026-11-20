@@ -2,28 +2,54 @@
 
 **BUILD. CONTROL. SECURE.**
 
-CORNOD is a private-in-development cloud engineering workspace.
+CORNOD is an early-stage cloud engineering platform project.
 
-## Current stage
-- Initial responsive control-center interface.
-- No public registration.
-- No real terminal/runtime is connected yet.
-- No user commands are executed by this static frontend.
-- No production deployment is intended from this branch.
+> **Visibility notice:** This GitHub repository and its GitHub Pages preview are currently public. The preview is not access-controlled. Do not enter, commit or upload secrets, personal information, customer data or private operational details.
 
-## Security baseline
+## Live preview
+
+https://abdulls95.github.io/members/
+
+The site is a static frontend preview only. It is not a private workspace or a production service.
+
+## Current implementation
+
+- Responsive Arabic/English control-center interface.
+- Accessible navigation behavior and a restrictive frontend Content Security Policy.
+- Static validation and GitHub Actions quality checks.
+- Proposed control-plane API contract and OpenAPI description.
+- Proposed tenant authorization matrix and provider-neutral logical data model.
+- Architecture, threat model and release-blocking security checklist.
+
+## Not implemented
+
+- No authentication, MFA or tenant accounts.
+- No database or persistent user/project storage.
+- No Linux runtime, isolated workspaces or executable terminal.
+- No tool installation or command execution.
+- No billing, metering service or production audit pipeline.
+
+The interface deliberately does not simulate successful backend operations.
+
+## Security and delivery rules
+
 - Never execute tenant workloads on the control-plane host.
-- Each future workspace must run in an isolated environment with CPU, memory, storage, network and time limits.
-- Keep secrets server-side; never commit service-role keys, private tokens or credentials.
-- Add authentication, authorization, audit logging and abuse controls before enabling workloads.
+- Every future workspace must run in a strongly isolated environment with server-enforced CPU, memory, storage, process, network and time limits.
+- Keep all privileged secrets server-side in a managed secret store.
+- Enforce tenant and object-level authorization on every API request.
+- Do not enable public signup or workload execution until the security acceptance gates have been independently verified.
 
-## Planned platform areas
-1. Identity and access control
-2. Isolated Linux workspaces
-3. Browser terminal gateway
-4. Tool catalog and controlled execution
-5. Security learning labs and OSINT workflows
-6. Usage quotas, billing and audit trail
+## Engineering documents
+
+- [Target architecture](docs/ARCHITECTURE.md)
+- [Threat model](docs/THREAT-MODEL.md)
+- [API contract](docs/API-CONTRACT.md)
+- [OpenAPI v1](openapi/cornod-v1.yaml)
+- [Authorization matrix](docs/AUTHORIZATION-MATRIX.md)
+- [Logical data model](docs/DATA-MODEL.md)
+- [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)
+- [Delivery roadmap](docs/ROADMAP.md)
 
 ## Development
-This branch is a private development branch. The default `main` branch and GitHub Pages deployment are intentionally untouched.
+
+The current default branch is `main`. The old members application is preserved separately in the `legacy-members-backup` branch. The family-tree project is separate and is not part of this repository.
