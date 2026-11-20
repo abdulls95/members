@@ -1,7 +1,7 @@
 # CORNOD isolated Linux runtime — Firecracker design
 
 **Selected runtime:** Firecracker microVMs, with the matching Firecracker Jailer.  
-**Version baseline:** Firecracker v1.18.0, the supported release current on 2026-11-20. Re-evaluate the pinned version before every host rollout and patch within the supported window.
+**Version baseline:** Firecracker v1.18.0, the supported release current on 2026-11-20 (official support window through 2027-05-09). Re-evaluate the pinned version before every host rollout and patch within the supported window.
 
 ## Why this runtime
 
@@ -101,3 +101,10 @@ Every create operation must be idempotent by workspace ID. A retry must discover
 - [ ] Guest init/agent, vsock protocol and terminal gateway.
 - [ ] End-to-end Firecracker host test on a KVM-capable staging node.
 - [ ] Independent security review before enabling tenant workloads.
+
+## Upstream references
+
+- [Firecracker release policy](https://github.com/firecracker-microvm/firecracker/blob/main/docs/RELEASE_POLICY.md)
+- [Firecracker Jailer documentation](https://github.com/firecracker-microvm/firecracker/blob/main/docs/jailer.md)
+- [Production host setup recommendations](https://github.com/firecracker-microvm/firecracker/blob/main/docs/prod-host-setup.md)
+- [Firecracker getting started and KVM requirements](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md)
