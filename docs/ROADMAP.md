@@ -8,7 +8,7 @@
 - [x] Navigation accessibility behavior and Escape-to-close support.
 - [x] Static validation for duplicate IDs, internal navigation targets and frontend secret patterns.
 - [x] Quality workflow runs on pushes to main and pull requests.
-- [x] Proposed API contract, OpenAPI document, tenant role matrix and release security gates.
+- [x] Proposed API contract, OpenAPI document, tenant role matrix, logical data model and release security gates.
 - [ ] Validate OpenAPI document with a dedicated schema validator in CI.
 - [ ] Add automated browser tests for keyboard, mobile navigation and language switching.
 
