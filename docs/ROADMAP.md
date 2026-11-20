@@ -24,7 +24,7 @@
 - [x] Add microsecond-safe keyset pagination tests for workspace and audit feeds.
 - [ ] Implement browser Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies.
 - [ ] Implement tenant membership administration through separately reviewed privileged procedures.
-- [ ] Implement the API contract with object-level authorization on every route.
+- [x] Implement tenant-scoped API reads and quota-aware workspace request queuing with idempotency.
 - [ ] Add CSRF/CORS policy, rate limits, idempotency and session revocation.
 - [ ] Configure managed secret storage and isolated development/staging/production environments.
 - [ ] Add append-only audit events and retention controls.
