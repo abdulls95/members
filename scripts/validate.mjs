@@ -5,6 +5,7 @@ const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf
 const html = read("index.html");
 const css = read("assets/styles.css");
 const js = read("assets/app.js");
+const openapi = read("openapi/cornod-v1.yaml");
 
 assert.match(html, /<html lang="ar" dir="rtl">/, "Arabic RTL must be the default");
 assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/, "Preview must discourage indexing");
@@ -32,7 +33,10 @@ for (const href of [...html.matchAll(/href="#([^"]+)"/g)].map((match) => match[1
 
 assert.doesNotMatch(html, /<script[^>]+src=["']https?:\/\//i, "Frontend must not load unreviewed remote scripts");
 assert.doesNotMatch(html + js + css, /service_role|sb_secret_|SUPABASE_SERVICE_ROLE_KEY|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/i, "Privileged secret pattern found in frontend");
-for (const path of ["docs/ARCHITECTURE.md", "docs/THREAT-MODEL.md", "docs/ROADMAP.md"]) {
+assert.match(openapi, /^openapi: 3\\.1\\.0/m, "OpenAPI contract must declare version 3.1.0");
+assert.match(openapi, /additionalProperties: false/, "Request schemas must explicitly reject unknown fields");
+assert.match(openapi, /terminal-tickets/, "Terminal ticket contract is missing");
+for (const path of ["docs/ARCHITECTURE.md", "docs/THREAT-MODEL.md", "docs/ROADMAP.md", "docs/API-CONTRACT.md", "docs/AUTHORIZATION-MATRIX.md", "docs/DATA-MODEL.md", "docs/SECURITY-ACCEPTANCE.md"]) {
   assert.ok(existsSync(new URL("../" + path, import.meta.url)), path + " missing");
 }
 console.log("CORNOD static, navigation and security guardrail checks passed.");
