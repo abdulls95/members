@@ -1,7 +1,7 @@
 name: CORNOD API quality checks
 on:
   push:
-    branches: ["main", "cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline", "cornod/workspace-queue-foundation", "cornod/security-review-round2", "cornod/worker-lease-engine", "cornod/idempotency-quota-fix"]
+    branches: ["main", "cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline", "cornod/workspace-queue-foundation", "cornod/security-review-round2", "cornod/worker-lease-engine", "cornod/idempotency-quota-fix", "cornod/firecracker-api-adapter"]
     paths:
       - "server/**"
       - "db/**"
