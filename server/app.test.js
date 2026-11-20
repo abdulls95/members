@@ -44,3 +44,19 @@ test("API rejects an unapproved browser origin", async () => {
     assert.equal((await response.json()).error.code, "ORIGIN_DENIED");
   });
 });
+
+test("CORS preflight allows only the explicit workspace request headers", async () => {
+  await withServer(async (base) => {
+    const response = await fetch(base + "/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://app.cornod.invalid",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type,idempotency-key"
+      }
+    });
+    assert.equal(response.status, 204);
+    assert.match(response.headers.get("access-control-allow-methods"), /POST/);
+    assert.match(response.headers.get("access-control-allow-headers"), /Idempotency-Key/);
+  });
+});
