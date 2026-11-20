@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+EXPECTED_VERSION="1.18.0"
+fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
+ok() { printf 'OK: %s\n' "$1"; }
+
+for binary in firecracker jailer; do
+  command -v "$binary" >/dev/null 2>&1 || fail "$binary binary is missing"
+  version="$("$binary" --version 2>&1 | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)"
+  version="${version#v}"
+  [[ "$version" == "$EXPECTED_VERSION" ]] || fail "$binary must be pinned to $EXPECTED_VERSION (found: ${version:-unknown})"
+  ok "$binary version $version"
+done
+
+[[ -c /dev/kvm ]] || fail "/dev/kvm is missing; hardware virtualization is unavailable"
+[[ -r /sys/fs/cgroup/cgroup.controllers ]] || fail "cgroup v2 is not mounted at /sys/fs/cgroup"
+ok "KVM device and cgroup v2 are present"
+
+getent passwd cornod-vmm >/dev/null 2>&1 || fail "dedicated cornod-vmm user is missing"
+getent group cornod-vmm >/dev/null 2>&1 || fail "dedicated cornod-vmm group is missing"
+ok "dedicated unprivileged VMM identity exists"
+
+for directory in /srv/jailer /var/lib/cornod /var/lib/cornod/templates; do
+  [[ -d "$directory" ]] || fail "required directory is missing: $directory"
+  owner="$(stat -c '%U' "$directory")"
+  [[ "$owner" == "root" ]] || fail "$directory must be owned by root"
+  mode="$(stat -c '%a' "$directory")"
+  if (( (8#$mode & 0022) != 0 )); then
+    fail "$directory must not be group- or world-writable (mode $mode)"
+  fi
+  ok "$directory is root-owned and not group/world writable"
+done
+
+printf '\nHost preflight passed. This does not launch a VM or prove network isolation.\n'
