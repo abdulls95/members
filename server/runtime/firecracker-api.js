@@ -105,6 +105,8 @@ function putJson(socketPath, endpoint, payload, timeoutMs) {
         responseBytes += chunk.length;
         if (responseBytes > 16_384) response.destroy();
       });
+      response.on("aborted", () => rejectPromise(new FirecrackerApiError("FIRECRACKER_RESPONSE_ABORTED")));
+      response.on("error", () => rejectPromise(new FirecrackerApiError("FIRECRACKER_RESPONSE_FAILED")));
       response.on("end", () => {
         if (response.statusCode >= 200 && response.statusCode < 300) {
           resolvePromise();
