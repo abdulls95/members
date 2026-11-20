@@ -183,7 +183,7 @@ export function createApiServer({ config, pool, verifyAccessToken, rateLimit = c
             const result = await client.query(
               `SELECT id, project_id, template_id, display_name, state, expires_at, created_at
                FROM public.workspaces WHERE ${where}
-               ORDER BY created_at DESC, id DESC LIMIT ${values.length}`,
+               ORDER BY created_at DESC, id DESC LIMIT $${values.length}`,
               values
             );
             const hasMore = result.rows.length > limit;
