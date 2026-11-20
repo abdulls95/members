@@ -22,14 +22,6 @@ A successful request creates a workspace in `REQUESTED` state and a queue record
 
 **Important:** the queue is not yet consumed by a runtime worker. A queued request is not a running Linux machine. No shell or terminal endpoint exists, and the workspace will remain requested until the isolated runtime worker is implemented and deployed.
 
-## Workspace request safety
-
-The create endpoint accepts only `templateId`, `displayName`, `resourceProfile` and an optional authorized `projectId`. Unknown fields such as commands, image names, mounts, network settings or runtime flags are rejected. The server resolves active templates and resource profiles from its own catalog, checks project assignment and tenant quotas, and requires an idempotency key.
-
-A successful request creates a workspace in `REQUESTED` state and a queue record in `QUEUED` state in one database transaction. Repeated idempotency keys replay the original result; reusing a key with a different request is rejected. The worker role is separate from the API role and cannot bypass RLS.
-
-**Important:** the queue is not yet consumed by a runtime worker. A queued request is not a running Linux machine. No shell or terminal endpoint exists, and the workspace will remain requested until the isolated runtime worker is implemented and deployed.
-
 ## Authentication
 
 The API verifies signed OIDC access tokens using the configured issuer, audience, remote JWKS endpoint and required `cornod:api` scope. It accepts only RS256 or ES256 signatures and rejects expired or over-age tokens. The browser must never store access or refresh tokens in localStorage, sessionStorage, URLs or logs. A production browser login should use Authorization Code + PKCE and a server-side session/BFF with Secure, HttpOnly, SameSite cookies; the current API bearer adapter is an internal service foundation, not the final browser session design.
