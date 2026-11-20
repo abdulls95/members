@@ -19,9 +19,10 @@ For each request, the trusted API must:
 2. Resolve the active tenant membership and permissions server-side.
 3. Open a database transaction.
 4. Set `SET LOCAL cornod.user_id = '<verified-user-uuid>'` and `SET LOCAL cornod.tenant_id = '<authorized-tenant-uuid>'`.
-5. Perform parameterized SQL only, enforce action-level role checks, and commit or roll back.
+5. For membership administration only, set transaction-local `cornod.membership_manage = 'true'` after verifying the caller is `TENANT_OWNER` or `TENANT_ADMIN`.
+6. Perform parameterized SQL only, enforce action-level role checks, and commit or roll back.
 
-The custom settings are transaction-local so pooled connections cannot retain one request's tenant context for another request. RLS is defense in depth; it does not replace API authorization or safe parameterized queries. Do not expose a database connection to browsers.
+The custom settings are transaction-local so pooled connections cannot retain one request's tenant context for another request. Ordinary members can read only their own active membership rows; tenant membership administration requires the separately authorized `cornod.membership_manage` context. RLS is defense in depth; it does not replace API authorization or safe parameterized queries. Do not expose a database connection to browsers.
 
 ## Apply
 
