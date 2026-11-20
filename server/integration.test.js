@@ -92,7 +92,15 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
 
   const audit = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events", ownerToken);
   assert.equal(audit.status, 200);
-  assert.equal((await audit.json()).data.items.length, 1);
+  assert.equal((await audit.json()).data.items.length, 2);
+  const firstAuditPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events?limit=1", ownerToken);
+  const firstAuditBody = await firstAuditPage.json();
+  assert.equal(firstAuditBody.data.items.length, 1);
+  assert.ok(firstAuditBody.data.nextCursor);
+  const secondAuditPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events?limit=1&cursor=" + encodeURIComponent(firstAuditBody.data.nextCursor), ownerToken);
+  const secondAuditBody = await secondAuditPage.json();
+  assert.equal(secondAuditBody.data.items.length, 1);
+  assert.notEqual(firstAuditBody.data.items[0].id, secondAuditBody.data.items[0].id);
 
   const usage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/usage", ownerToken);
   assert.equal(usage.status, 200);
