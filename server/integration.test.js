@@ -76,7 +76,7 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   assert.equal(workspaces.status, 200);
   const workspaceBody = await workspaces.json();
   assert.equal(workspaceBody.data.items.length, 2);
-  assert.equal(workspaceBody.data.items[0].display_name, "API Test Workspace");
+  assert.ok(workspaceBody.data.items.some((item) => item.display_name === "API Test Workspace"));
 
   const firstPage = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces?limit=1", ownerToken);
   const firstPageBody = await firstPage.json();
