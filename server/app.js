@@ -137,7 +137,7 @@ async function createWorkspaceRequest(client, user, role, tenantId, body, idempo
 
   const input = normalizeWorkspaceRequest(body);
   const requestHash = createHash("sha256").update(JSON.stringify(input)).digest("hex");
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [tenantId + ":" + user.id + ":" + idempotencyKey]);
+  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [tenantId]);
 
   const existing = await client.query(
     `SELECT j.id AS job_id, j.request_hash, j.state AS job_state,
@@ -189,9 +189,6 @@ async function createWorkspaceRequest(client, user, role, tenantId, body, idempo
       if (!assignment.rowCount) throw new HttpError(403, "PROJECT_ACCESS_DENIED", "You are not assigned to this project");
     }
   }
-
-  // Serialize quota accounting per tenant so concurrent create requests cannot over-allocate.
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", ["cornod:tenant-quota:" + tenantId]);
 
   const quota = await client.query(
     "SELECT max_workspaces, max_cpu_millicores, max_memory_mb, max_storage_mb, max_concurrent_jobs FROM public.tenant_quotas WHERE tenant_id = $1",
