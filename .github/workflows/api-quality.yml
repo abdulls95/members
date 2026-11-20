@@ -65,7 +65,12 @@ jobs:
         run: npm test
       - name: Generate CycloneDX dependency SBOM
         run: npm sbom --omit=dev --sbom-format=cyclonedx > sbom.cdx.json
-      - name: Upload dependency SBOM\n        uses: actions/upload-artifact@v4\n        with:\n          name: cornod-api-sbom\n          path: sbom.cdx.json\n          retention-days: 30\n      - name: Build API container image
+      - name: Upload dependency SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: cornod-api-sbom
+          path: sbom.cdx.json
+          retention-days: 30\n      - name: Build API container image
         run: docker build --pull --tag cornod-api:ci .
       - name: Verify container runs as non-root
         run: test "$(docker image inspect --format='{{.Config.User}}' cornod-api:ci)" = "node"
