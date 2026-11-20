@@ -80,8 +80,9 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   const me = await get("/v1/me", ownerToken);
   assert.equal(me.status, 200);
   const meBody = await me.json();
-  assert.equal(meBody.data.memberships.length, 1);
-  assert.equal(meBody.data.memberships[0].role, "TENANT_OWNER");
+  assert.equal(meBody.data.memberships.length, 2);
+  assert.ok(meBody.data.memberships.some((membership) => membership.tenantId === "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" && membership.role === "TENANT_OWNER"));
+  assert.ok(meBody.data.memberships.some((membership) => membership.tenantId === "cccccccc-cccc-4ccc-8ccc-cccccccccccc" && membership.role === "TENANT_OWNER"));
 
   const workspaces = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", ownerToken);
   assert.equal(workspaces.status, 200);
