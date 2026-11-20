@@ -54,3 +54,8 @@ Copy `.env.example` to a private environment configuration and supply real value
 - No terminal gateway, tool execution, start/stop actions or public signup exists.
 - The in-process IP rate limiter is a development guardrail; production needs gateway/WAF rate limits shared across replicas.
 - A committed npm lockfile and dependency provenance review remain production gates.
+
+
+## Worker queue lease engine
+
+See `docs/WORKER-QUEUE.md` for the queue protocol and runtime boundary. The worker lease module is covered by PostgreSQL integration tests using a separate database login; it must not be confused with a production workload worker.
