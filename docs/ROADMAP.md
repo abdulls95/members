@@ -32,6 +32,7 @@
 ## Phase 2 — Isolated execution
 - [ ] Select microVM or equivalently strong runtime isolation and hardened base images.
 - [x] Add a typed, quota-aware workspace request API and idempotent job queue.
+- [x] Add a worker-only PostgreSQL job claim function with short leases, retry exhaustion and `SKIP LOCKED`.
 - [ ] Build an orchestrator with typed, allowlisted operations only.
 - [ ] Implement quotas, TTLs, lifecycle cleanup and quarantine.
 - [ ] Build a terminal gateway with one-time short-lived attachment tickets.
