@@ -14,6 +14,7 @@ export const TOOLS = [
   { id: 'terraform', name: 'Terraform', cat: 'ops', risk: 'medium', pkg: 'terraform', d: { en: 'Infrastructure as code.', ar: 'البنية التحتية ككود.' } },
   { id: 'kubectl', name: 'kubectl', cat: 'ops', risk: 'medium', pkg: 'kubectl', d: { en: 'Kubernetes CLI.', ar: 'واجهة أوامر Kubernetes.' } },
   { id: 'nmap', name: 'Nmap', cat: 'sec', risk: 'high', pkg: 'nmap', d: { en: 'Network scanner. Egress limited to lab networks.', ar: 'ماسح شبكات. الاتصال الخارجي مقصور على شبكات المختبر.' } },
+  { id: 'sherlock', name: 'Sherlock', cat: 'sec', risk: 'medium', pkg: 'sherlock-project', d: { en: 'Find public profiles by username. Use only for lawful, authorized OSINT and respect platform rate limits.', ar: 'العثور على الملفات العامة باسم المستخدم. للاستخدام القانوني والمصرّح به فقط مع احترام حدود المنصات.' } },
   { id: 'wireshark', name: 'tshark', cat: 'sec', risk: 'medium', pkg: 'tshark', d: { en: 'Packet analysis (CLI).', ar: 'تحليل الحزم (سطر أوامر).' } },
   { id: 'sqlmap', name: 'sqlmap', cat: 'sec', risk: 'high', pkg: 'sqlmap', d: { en: 'SQL injection testing. Lab targets only.', ar: 'اختبار حقن SQL. أهداف المختبر فقط.' } },
 ];
