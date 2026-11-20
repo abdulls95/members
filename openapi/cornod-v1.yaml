@@ -274,7 +274,7 @@ components:
                   type: string
                 state:
                   type: string
-                  const: REQUESTED
+                  enum: [REQUESTED, POLICY_CHECKED, PROVISIONING, READY, ACTIVE, TERMINATING, DESTROYED, REJECTED, QUARANTINED]
                 templateId:
                   type: string
                 resourceProfile:
@@ -292,7 +292,7 @@ components:
                   format: uuid
                 state:
                   type: string
-                  const: QUEUED
+                  enum: [QUEUED, LEASED, SUCCEEDED, FAILED, CANCELLED]
                 action:
                   type: string
                   const: CREATE
