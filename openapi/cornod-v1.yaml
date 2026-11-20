@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: CORNOD Control Plane API
   version: 1.0.0
-  description: Proposed contract only. No production API is currently deployed.
+  description: Implemented API foundation. Workspace creation currently queues a request; no runtime worker is deployed.
 servers:
   - url: https://api.example.invalid/v1
     description: Placeholder; replace only after an approved backend is deployed.
