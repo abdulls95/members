@@ -76,8 +76,9 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN
     NULL;
   END;
-  IF has_table_privilege('cornod_app', 'public.usage_ledger', 'INSERT') THEN
-    RAISE EXCEPTION 'API role can forge usage records';
+  IF has_table_privilege('cornod_app', 'public.usage_ledger', 'INSERT')
+     OR has_sequence_privilege('cornod_app', 'public.usage_ledger_id_seq', 'USAGE') THEN
+    RAISE EXCEPTION 'API role can forge usage records or consume metering sequence';
   END IF;
   BEGIN
     INSERT INTO public.workspace_events (tenant_id, workspace_id, event_type, actor_id, request_id)
