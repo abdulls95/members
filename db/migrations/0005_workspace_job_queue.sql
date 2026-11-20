@@ -59,7 +59,7 @@ CREATE TABLE internal.workspace_jobs (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz,
-  UNIQUE (tenant_id, idempotency_key),
+  UNIQUE (tenant_id, requested_by, idempotency_key),
   FOREIGN KEY (tenant_id, workspace_id) REFERENCES public.workspaces(tenant_id, id) ON DELETE CASCADE,
   FOREIGN KEY (tenant_id, requested_by) REFERENCES public.memberships(tenant_id, user_id) ON DELETE RESTRICT,
   CHECK (attempt_count <= max_attempts),
