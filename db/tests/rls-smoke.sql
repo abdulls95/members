@@ -47,6 +47,7 @@ BEGIN
   IF (SELECT count(*) FROM public.terminal_tickets) <> 1 THEN RAISE EXCEPTION 'terminal ticket owner isolation failed'; END IF;
   IF (SELECT count(*) FROM internal.workspace_jobs) <> 1 THEN RAISE EXCEPTION 'workspace job requester isolation failed'; END IF;
   IF has_table_privilege('cornod_app', 'internal.workspace_jobs', 'UPDATE') THEN RAISE EXCEPTION 'runtime app role can update jobs'; END IF;
+  IF has_function_privilege('cornod_app', 'internal.claim_next_workspace_job(bytea,integer)', 'EXECUTE') THEN RAISE EXCEPTION 'runtime app role can claim worker jobs'; END IF;
   IF (SELECT count(*) FROM public.workspace_templates WHERE id = 'linux-base') <> 1 THEN RAISE EXCEPTION 'approved template catalog read failed'; END IF;
   IF has_table_privilege('cornod_app', 'public.memberships', 'UPDATE')
      OR has_table_privilege('cornod_app', 'public.memberships', 'INSERT')
@@ -108,16 +109,26 @@ RESET ROLE;
 
 SET ROLE cornod_worker;
 BEGIN;
-DO $$
+DO $
+DECLARE
+  claimed internal.workspace_jobs;
+  token_hash bytea := decode(repeat('c', 64), 'hex');
 BEGIN
   IF (SELECT count(*) FROM internal.workspace_jobs) <> 2 THEN
     RAISE EXCEPTION 'worker cannot see the full job queue';
   END IF;
-  UPDATE internal.workspace_jobs SET state = 'CANCELLED', updated_at = now()
-  WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-    AND requested_by = '30000000-0000-4000-8000-000000000003';
+  SELECT * INTO claimed FROM internal.claim_next_workspace_job(token_hash, 30);
+  IF claimed.id IS NULL OR claimed.state <> 'LEASED' OR claimed.attempt_count <> 1 THEN
+    RAISE EXCEPTION 'worker failed to claim a queued job';
+  END IF;
+  IF claimed.lease_token_hash <> token_hash OR claimed.lease_expires_at <= now() THEN
+    RAISE EXCEPTION 'worker lease token or expiry was not stored';
+  END IF;
+  UPDATE internal.workspace_jobs
+  SET state = 'CANCELLED', lease_expires_at = NULL, lease_token_hash = NULL, updated_at = now()
+  WHERE id = claimed.id;
   IF NOT FOUND THEN RAISE EXCEPTION 'worker cannot update a claimed job'; END IF;
-END $$;
+END $;
 ROLLBACK;
 RESET ROLE;
 
@@ -125,6 +136,9 @@ DO $$
 BEGIN
   IF (SELECT rolbypassrls OR rolsuper FROM pg_roles WHERE rolname = 'cornod_app') THEN
     RAISE EXCEPTION 'cornod_app must not bypass row-level security';
+  END IF;
+  IF NOT has_function_privilege('cornod_worker', 'internal.claim_next_workspace_job(bytea,integer)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'worker role cannot execute the job claim function';
   END IF;
   IF (SELECT rolbypassrls OR rolsuper FROM pg_roles WHERE rolname = 'cornod_worker') THEN
     RAISE EXCEPTION 'cornod_worker must not bypass row-level security';
