@@ -51,7 +51,8 @@ The interface deliberately does not simulate successful backend operations.
 - [Logical data model](docs/DATA-MODEL.md)
 - [Database migrations and security model](db/README.md)
 - [API service implementation and deployment boundary](docs/API-SERVICE.md)
-- [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)\n- [Security reporting policy](SECURITY.md)
+- [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)
+- [Security reporting policy](SECURITY.md)
 - [Delivery roadmap](docs/ROADMAP.md)
 
 ## Development
