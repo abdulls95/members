@@ -35,7 +35,7 @@ BEGIN;
 SET LOCAL cornod.user_id = '10000000-0000-4000-8000-000000000001';
 SET LOCAL cornod.tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
-DO $$$
+DO $$
 BEGIN
   IF (SELECT count(*) FROM public.tenants) <> 1 THEN RAISE EXCEPTION 'tenant isolation failed'; END IF;
   IF (SELECT count(*) FROM public.memberships) <> 1 THEN RAISE EXCEPTION 'membership isolation failed'; END IF;
@@ -55,7 +55,7 @@ BEGIN
   END IF;
 END $$;
 
-DO $$$
+DO $$
 BEGIN
   BEGIN
     INSERT INTO public.projects (tenant_id, name, created_by)
