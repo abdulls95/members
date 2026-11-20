@@ -1,0 +1,132 @@
+// Bilingual dictionary. Every key MUST exist in both languages (enforced by tests/unit/i18n.test.mjs).
+export const DICT = {
+  en: {
+    'app.tagline': 'Cloud engineering platform',
+    'app.slogan': 'BUILD. CONTROL. SECURE.',
+    'nav.platform': 'Platform', 'nav.build': 'Build', 'nav.security': 'Security', 'nav.account': 'Account',
+    'nav.home': 'Overview', 'nav.dashboard': 'Dashboard', 'nav.workspaces': 'Workspaces', 'nav.terminal': 'Terminal',
+    'nav.files': 'Files & Projects', 'nav.marketplace': 'Tool Marketplace', 'nav.commands': 'Command Library',
+    'nav.osint': 'OSINT', 'nav.labs': 'Security Labs', 'nav.ai': 'AI Assistant', 'nav.admin': 'Administration',
+    'nav.settings': 'Settings', 'nav.status': 'Build Status', 'nav.signin': 'Sign in', 'nav.menu': 'Menu',
+    'lang.switch': 'العربية',
+    'status.live': 'Live', 'status.preview': 'Preview', 'status.planned': 'Planned',
+    'status.backend': 'Backend: not connected',
+    'notice.preview': 'Interface preview.', 'notice.previewBody': 'This screen is built, but the backend service it needs is not deployed yet. Nothing here runs on a server.',
+    'home.lead': 'Real, isolated Linux environments in the browser — with a terminal, workspaces, a tool marketplace, a command library, OSINT tooling, security labs and an AI assistant.',
+    'home.ctaTerminal': 'Open terminal', 'home.ctaStatus': 'What works today',
+    'home.pillars': 'Platform pillars',
+    'home.p.env': 'Isolated Linux environments', 'home.p.envD': 'One sandbox per user: microVM isolation, CPU/RAM/disk/process limits, egress control.',
+    'home.p.term': 'Real terminal', 'home.p.termD': 'A full PTY streamed over WebSocket — not a simulation.',
+    'home.p.mkt': 'Tool marketplace', 'home.p.mktD': 'Install vetted tools into your environment with one action.',
+    'home.p.sec': 'Security labs & OSINT', 'home.p.secD': 'Guided, legal, sandboxed training and investigation workflows.',
+    'home.p.ai': 'AI assistant', 'home.p.aiD': 'Explains commands, reviews scripts, guides labs.',
+    'home.p.files': 'Files & projects', 'home.p.filesD': 'Persistent volumes per workspace with snapshots.',
+    'dash.title': 'Dashboard', 'dash.sub': 'Your environments, usage and activity.',
+    'dash.envs': 'Active environments', 'dash.cpu': 'CPU-hours this month', 'dash.storage': 'Storage used', 'dash.tools': 'Tools installed',
+    'dash.activity': 'Recent activity', 'dash.noData': 'No data — sign in once the backend is live.',
+    'ws.title': 'Workspaces', 'ws.sub': 'Isolated Linux environments, one per project.', 'ws.new': 'New workspace',
+    'ws.image': 'Base image', 'ws.size': 'Size', 'ws.empty': 'No workspaces yet. Creating one requires the sandbox orchestrator.',
+    'term.title': 'Terminal', 'term.sub': 'Connects to your workspace over a secure WebSocket PTY.',
+    'term.disconnected': 'disconnected', 'term.connected': 'connected', 'term.connecting': 'connecting…',
+    'files.title': 'Files & Projects', 'files.sub': 'Browse and manage files inside your workspace volume.',
+    'mkt.title': 'Tool Marketplace', 'mkt.sub': 'Vetted tools you can install into a workspace.', 'mkt.search': 'Search tools…',
+    'mkt.install': 'Install', 'mkt.all': 'All', 'mkt.needsWs': 'Requires a running workspace',
+    'cmd.title': 'Command Library', 'cmd.sub': 'Curated, explained Linux commands.', 'cmd.search': 'Search commands…', 'cmd.copy': 'Copy', 'cmd.copied': 'Copied',
+    'osint.title': 'OSINT', 'osint.sub': 'Open-source intelligence modules. Lawful, documented use only.',
+    'osint.policy': 'Use only on targets you own or are authorized to assess. Every query will be logged and rate-limited.',
+    'labs.title': 'Security Labs', 'labs.sub': 'Hands-on cybersecurity training in disposable sandboxes.', 'labs.start': 'Start lab',
+    'labs.level': 'Level', 'labs.duration': 'Duration',
+    'ai.title': 'AI Assistant', 'ai.sub': 'Ask about commands, errors, scripts and labs.', 'ai.placeholder': 'Ask the assistant…', 'ai.send': 'Send',
+    'ai.offline': 'The assistant needs the server-side AI gateway (API keys are never placed in the browser). It is not deployed yet.',
+    'admin.title': 'Administration', 'admin.sub': 'Users, roles, quotas, audit log and system health.',
+    'admin.roles': 'Roles & permissions', 'admin.audit': 'Audit log', 'admin.health': 'System health', 'admin.users': 'Users',
+    'admin.denied': 'You do not have permission to view this page.',
+    'set.title': 'Settings', 'set.sub': 'Language, layout and account.', 'set.lang': 'Language', 'set.preview': 'Interface preview role',
+    'set.previewHelp': 'Lets you see role-gated screens while authentication is not deployed. It grants no real access to anything.',
+    'auth.title': 'Sign in', 'auth.email': 'Email', 'auth.password': 'Password',
+    'auth.unavailable': 'Authentication service is not deployed yet. Sign-in is disabled rather than faked.',
+    'status.title': 'Build Status', 'status.sub': 'An honest view of what is implemented, previewed, or planned.',
+    'status.feature': 'Feature', 'status.state': 'State', 'status.notes': 'Notes',
+    'common.category': 'Category', 'common.risk': 'Risk', 'common.role': 'Role', 'common.permissions': 'Permissions',
+    'common.notFound': 'Page not found', 'common.back': 'Back to overview', 'common.min': 'min',
+  },
+  ar: {
+    'app.tagline': 'منصة هندسية سحابية',
+    'app.slogan': 'BUILD. CONTROL. SECURE.',
+    'nav.platform': 'المنصة', 'nav.build': 'البناء', 'nav.security': 'الأمن', 'nav.account': 'الحساب',
+    'nav.home': 'نظرة عامة', 'nav.dashboard': 'لوحة التحكم', 'nav.workspaces': 'مساحات العمل', 'nav.terminal': 'الطرفية',
+    'nav.files': 'الملفات والمشاريع', 'nav.marketplace': 'سوق الأدوات', 'nav.commands': 'مكتبة الأوامر',
+    'nav.osint': 'OSINT', 'nav.labs': 'مختبرات الأمن', 'nav.ai': 'المساعد الذكي', 'nav.admin': 'الإدارة',
+    'nav.settings': 'الإعدادات', 'nav.status': 'حالة البناء', 'nav.signin': 'تسجيل الدخول', 'nav.menu': 'القائمة',
+    'lang.switch': 'English',
+    'status.live': 'يعمل', 'status.preview': 'واجهة أولية', 'status.planned': 'مخطط',
+    'status.backend': 'الخادم: غير متصل',
+    'notice.preview': 'واجهة أولية.', 'notice.previewBody': 'هذه الشاشة مبنية، لكن الخدمة الخلفية التي تحتاجها لم تُنشر بعد. لا شيء هنا يعمل على خادم.',
+    'home.lead': 'بيئات Linux حقيقية ومعزولة من المتصفح، مع طرفية ومساحات عمل وسوق أدوات ومكتبة أوامر وأدوات OSINT ومختبرات أمنية ومساعد ذكاء اصطناعي.',
+    'home.ctaTerminal': 'افتح الطرفية', 'home.ctaStatus': 'ما الذي يعمل الآن',
+    'home.pillars': 'ركائز المنصة',
+    'home.p.env': 'بيئات Linux معزولة', 'home.p.envD': 'بيئة مستقلة لكل مستخدم: عزل MicroVM، وحدود للمعالج والذاكرة والتخزين والعمليات، وتحكم بالاتصالات الصادرة.',
+    'home.p.term': 'طرفية حقيقية', 'home.p.termD': 'PTY كامل عبر WebSocket، وليس محاكاة.',
+    'home.p.mkt': 'سوق الأدوات', 'home.p.mktD': 'ثبّت أدوات موثوقة في بيئتك بخطوة واحدة.',
+    'home.p.sec': 'مختبرات الأمن وOSINT', 'home.p.secD': 'تدريب وتحقيقات موجّهة وقانونية داخل بيئات معزولة.',
+    'home.p.ai': 'المساعد الذكي', 'home.p.aiD': 'يشرح الأوامر ويراجع السكربتات ويرشدك في المختبرات.',
+    'home.p.files': 'الملفات والمشاريع', 'home.p.filesD': 'تخزين دائم لكل مساحة عمل مع لقطات احتياطية.',
+    'dash.title': 'لوحة التحكم', 'dash.sub': 'بيئاتك واستهلاكك ونشاطك.',
+    'dash.envs': 'البيئات النشطة', 'dash.cpu': 'ساعات المعالج هذا الشهر', 'dash.storage': 'التخزين المستخدم', 'dash.tools': 'الأدوات المثبتة',
+    'dash.activity': 'النشاط الأخير', 'dash.noData': 'لا توجد بيانات — سجّل الدخول بعد تشغيل الخادم.',
+    'ws.title': 'مساحات العمل', 'ws.sub': 'بيئات Linux معزولة، واحدة لكل مشروع.', 'ws.new': 'مساحة عمل جديدة',
+    'ws.image': 'الصورة الأساسية', 'ws.size': 'الحجم', 'ws.empty': 'لا توجد مساحات عمل بعد. إنشاؤها يتطلب منسّق البيئات المعزولة.',
+    'term.title': 'الطرفية', 'term.sub': 'تتصل بمساحة عملك عبر WebSocket آمن.',
+    'term.disconnected': 'غير متصل', 'term.connected': 'متصل', 'term.connecting': 'جارٍ الاتصال…',
+    'files.title': 'الملفات والمشاريع', 'files.sub': 'تصفّح وأدر الملفات داخل تخزين مساحة العمل.',
+    'mkt.title': 'سوق الأدوات', 'mkt.sub': 'أدوات موثوقة يمكنك تثبيتها في مساحة العمل.', 'mkt.search': 'ابحث عن أداة…',
+    'mkt.install': 'تثبيت', 'mkt.all': 'الكل', 'mkt.needsWs': 'يتطلب مساحة عمل قيد التشغيل',
+    'cmd.title': 'مكتبة الأوامر', 'cmd.sub': 'أوامر Linux مختارة ومشروحة.', 'cmd.search': 'ابحث عن أمر…', 'cmd.copy': 'نسخ', 'cmd.copied': 'تم النسخ',
+    'osint.title': 'OSINT', 'osint.sub': 'وحدات استخبارات المصادر المفتوحة. للاستخدام القانوني الموثّق فقط.',
+    'osint.policy': 'استخدمها فقط على أهداف تملكها أو مصرّح لك بتقييمها. كل استعلام سيُسجَّل ويخضع لحدود الاستخدام.',
+    'labs.title': 'مختبرات الأمن', 'labs.sub': 'تدريب عملي على الأمن السيبراني في بيئات مؤقتة معزولة.', 'labs.start': 'ابدأ المختبر',
+    'labs.level': 'المستوى', 'labs.duration': 'المدة',
+    'ai.title': 'المساعد الذكي', 'ai.sub': 'اسأل عن الأوامر والأخطاء والسكربتات والمختبرات.', 'ai.placeholder': 'اسأل المساعد…', 'ai.send': 'إرسال',
+    'ai.offline': 'المساعد يحتاج بوابة الذكاء الاصطناعي على الخادم (مفاتيح API لا توضع في المتصفح أبدًا). لم تُنشر بعد.',
+    'admin.title': 'الإدارة', 'admin.sub': 'المستخدمون والأدوار والحصص وسجل التدقيق وصحة النظام.',
+    'admin.roles': 'الأدوار والصلاحيات', 'admin.audit': 'سجل التدقيق', 'admin.health': 'صحة النظام', 'admin.users': 'المستخدمون',
+    'admin.denied': 'ليست لديك صلاحية لعرض هذه الصفحة.',
+    'set.title': 'الإعدادات', 'set.sub': 'اللغة والعرض والحساب.', 'set.lang': 'اللغة', 'set.preview': 'دور المعاينة للواجهة',
+    'set.previewHelp': 'يتيح لك رؤية الشاشات المقيّدة بالأدوار ما دام نظام الدخول غير منشور. لا يمنح أي صلاحية حقيقية.',
+    'auth.title': 'تسجيل الدخول', 'auth.email': 'البريد الإلكتروني', 'auth.password': 'كلمة المرور',
+    'auth.unavailable': 'خدمة المصادقة لم تُنشر بعد. تسجيل الدخول معطّل بدلًا من تزييفه.',
+    'status.title': 'حالة البناء', 'status.sub': 'عرض صريح لما تم تنفيذه، وما هو واجهة أولية، وما هو مخطط.',
+    'status.feature': 'الميزة', 'status.state': 'الحالة', 'status.notes': 'ملاحظات',
+    'common.category': 'الفئة', 'common.risk': 'الخطورة', 'common.role': 'الدور', 'common.permissions': 'الصلاحيات',
+    'common.notFound': 'الصفحة غير موجودة', 'common.back': 'العودة للنظرة العامة', 'common.min': 'دقيقة',
+  },
+};
+
+let lang = 'ar';
+const listeners = new Set();
+
+export function getLang() { return lang; }
+export function dir(l = lang) { return l === 'ar' ? 'rtl' : 'ltr'; }
+
+export function setLang(next) {
+  if (!DICT[next]) throw new Error(`Unsupported language: ${next}`);
+  lang = next;
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = next;
+    document.documentElement.dir = dir(next);
+  }
+  listeners.forEach((fn) => fn(next));
+}
+
+export function onLangChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+
+/** Translate a key. Falls back to English, then to the key itself (visible, so gaps get noticed). */
+export function t(key) {
+  return DICT[lang][key] ?? DICT.en[key] ?? key;
+}
+
+/** Pick the current language from a {ar, en} object used in data files. */
+export function L(obj) {
+  if (obj == null || typeof obj === 'string') return obj ?? '';
+  return obj[lang] ?? obj.en ?? '';
+}

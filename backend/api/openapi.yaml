@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info: { title: CORNOD API, version: 1.0.0-draft, description: "Design contract. Not implemented yet." }
+servers: [{ url: https://api.cornod.example/v1 }]
+components:
+  securitySchemes: { session: { type: apiKey, in: cookie, name: cornod_session } }
+  schemas:
+    Workspace:
+      type: object
+      required: [id, image, state, vcpu, memMiB, diskGiB]
+      properties:
+        id: { type: string }
+        image: { type: string, example: ubuntu-24.04 }
+        state: { enum: [creating, running, stopping, stopped, error] }
+        vcpu: { type: integer }
+        memMiB: { type: integer }
+        diskGiB: { type: integer }
+security: [{ session: [] }]
+paths:
+  /me: { get: { summary: Current user and role, responses: { "200": { description: OK } } } }
+  /workspaces:
+    get: { summary: List my workspaces (workspace:read), responses: { "200": { description: OK } } }
+    post: { summary: Create workspace (workspace:create, quota-checked), responses: { "201": { description: Created } } }
+  /workspaces/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    delete: { summary: Delete (workspace:delete, owner only), responses: { "204": { description: Deleted } } }
+  /workspaces/{id}/start: { post: { summary: Start microVM, responses: { "202": { description: Accepted } } } }
+  /workspaces/{id}/stop: { post: { summary: Snapshot and stop, responses: { "202": { description: Accepted } } } }
+  /workspaces/{id}/tools: { post: { summary: Install catalog tool (tools:install), responses: { "202": { description: Accepted } } } }
+  /pty/tickets: { post: { summary: Issue single-use PTY ticket (terminal:connect), responses: { "201": { description: Ticket } } } }
+  /catalog/tools: { get: { summary: Tool catalog, security: [], responses: { "200": { description: OK } } } }
+  /catalog/labs: { get: { summary: Lab catalog, security: [], responses: { "200": { description: OK } } } }
+  /labs/{id}/start: { post: { summary: Start lab on isolated lab network (labs:start), parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "202": { description: Accepted } } } }
+  /osint/{module}: { post: { summary: Run OSINT module (osint:query, logged, rate-limited), parameters: [{ name: module, in: path, required: true, schema: { type: string } }], responses: { "200": { description: OK } } } }
+  /ai/chat: { post: { summary: AI assistant (ai:chat), responses: { "200": { description: Stream } } } }
+  /admin/audit: { get: { summary: Audit log (admin:audit), responses: { "200": { description: OK } } } }

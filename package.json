@@ -1,0 +1,13 @@
+{
+  "name": "cornod",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CORNOD — cloud engineering platform. BUILD. CONTROL. SECURE.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test \"tests/unit/*.test.mjs\"",
+    "test:e2e": "node tests/e2e/smoke.mjs",
+    "serve": "npx --yes http-server site -p 8080 -c-1"
+  }
+}
