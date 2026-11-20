@@ -1,11 +1,11 @@
 # CORNOD API v1 — Control-plane contract
 
-**Status:** proposed contract; no API server is deployed. This document defines the boundary the frontend and future services must implement.
+**Status:** API foundation implemented for identity reads, tenant-scoped queries and queued workspace requests. The production deployment and runtime worker remain pending.
 
 ## Design rules
 
 - All endpoints are HTTPS under `/v1`; JSON requests and responses use UTF-8.
-- Authentication is through secure, HttpOnly, SameSite cookies or an approved workload identity. Browser storage must never hold long-lived bearer secrets.
+- The current API verifies short-lived OIDC bearer access tokens. A production browser integration should use Authorization Code + PKCE with a server-side session/BFF and Secure, HttpOnly, SameSite cookies. Browser storage must never hold long-lived bearer secrets.
 - Every object lookup is scoped by the authenticated tenant and authorized membership. A client-supplied tenant ID is never proof of access.
 - The control plane accepts typed operations, not host shell strings, container flags, arbitrary image references or raw orchestration payloads.
 - Mutating requests require CSRF protection when cookie-authenticated, an idempotency key where retries could duplicate work, and an audit event.
@@ -20,7 +20,8 @@
 | GET | `/health/ready` | Dependency readiness, sanitized | Internal probe |
 | GET | `/v1/me` | Current user and memberships | Authenticated |
 | GET | `/v1/tenants/{tenantId}/workspaces` | List visible workspaces | Workspace read |
-| POST | `/v1/tenants/{tenantId}/workspaces` | Create from approved template | Workspace create |
+| POST | `/v1/tenants/{tenantId}/workspaces` | Queue a workspace request from an approved template | Workspace create |
+| GET | `/v1/tenants/{tenantId}/workspace-jobs/{jobId}` | Read the caller's workspace job state | Job owner |
 | GET | `/v1/tenants/{tenantId}/workspaces/{workspaceId}` | Read workspace metadata | Workspace read |
 | POST | `/v1/tenants/{tenantId}/workspaces/{workspaceId}/actions` | Start, stop or restart | Workspace operate |
 | DELETE | `/v1/tenants/{tenantId}/workspaces/{workspaceId}` | Destroy workspace | Workspace delete |
@@ -34,10 +35,10 @@ Request fields are deliberately allowlisted:
 
 - `templateId`: identifier from the server-owned, approved template catalog.
 - `displayName`: 1–64 characters; plain text.
-- `resources.profile`: one of server-defined profiles such as `starter` or `standard`.
+- `resourceProfile`: one of server-defined profiles such as `starter` or `standard`.
 - `projectId`: optional project identifier already authorized for the caller.
 
-The API must reject client-supplied image names, entrypoints, host paths, mounts, capabilities, devices, network modes, environment secrets, runtime flags and arbitrary command strings. The orchestrator resolves templates and resource profiles from trusted server configuration.
+The API currently creates a workspace row in `REQUESTED` state and a job in `QUEUED` state. It does not launch a runtime. It rejects client-supplied image names, entrypoints, host paths, mounts, capabilities, devices, network modes, environment secrets, runtime flags and arbitrary command strings. A future worker must resolve templates and resource profiles from trusted server configuration.
 
 ## Workspace actions
 
