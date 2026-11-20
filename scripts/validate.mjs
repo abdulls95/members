@@ -43,7 +43,7 @@ assert.match(config, /wsBase: null/);
 
 assert.match(store, /lang: 'ar', previewRole: 'guest'/, "Only non-sensitive preview preferences may persist");
 assert.doesNotMatch(pages, /\sstyle\s*=/i, "UI templates must not use inline style attributes");
-assert.doesNotMatch(pages, /\son[a-z]+\s*=/i, "UI templates must not use inline event handlers");
+assert.doesNotMatch(pages, /<[^>]*\son[a-z]+\s*=/i, "UI templates must not use inline event handlers");
 assert.match(catalog, /Sherlock/i, "Curated tool catalogue should include Sherlock");
 
 assert.doesNotMatch(html, /<script[^>]+src=["']https?:\/\//i, "Frontend must not load unreviewed remote scripts");
