@@ -162,9 +162,15 @@ export const settings = {
 export const signin = {
   render: () => html`<div class="card accent" style="max-width:420px;margin:40px auto">
     <h1>${t('auth.title')}</h1><div class="notice"><span>${t('auth.unavailable')}</span></div>
-    <form onsubmit="return false"><label class="meta">${t('auth.email')}</label><input class="input" style="width:100%" type="email" disabled autocomplete="email">
+    <form id="signin-form"><label class="meta">${t('auth.email')}</label><input class="input" style="width:100%" type="email" disabled autocomplete="email">
     <label class="meta" style="display:block;margin-top:10px">${t('auth.password')}</label><input class="input" style="width:100%" type="password" disabled autocomplete="current-password">
     <button class="btn primary" style="width:100%;margin-top:14px" disabled aria-disabled="true">${t('auth.title')}</button></form></div>`,
+  mount: (root) => {
+    const f = root.querySelector('#signin-form');
+    const stop = (e) => e.preventDefault(); // no auth backend: never submit anywhere
+    f.addEventListener('submit', stop);
+    return () => f.removeEventListener('submit', stop);
+  },
 };
 
 // ---------- Build status ----------

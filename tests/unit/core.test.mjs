@@ -54,3 +54,13 @@ test('features: statuses are only live/preview/planned, sandbox is not claimed l
   const sandbox = FEATURES.find((f) => f[0] === 'sandbox');
   assert.notEqual(sandbox[1], 'live');
 });
+
+test('csp: no inline event handlers or javascript: URLs anywhere in site/', async () => {
+  const { readdir, readFile } = await import('node:fs/promises');
+  const files = (await readdir('site', { recursive: true })).filter((f) => /\.(js|html)$/.test(f));
+  for (const f of files) {
+    const src = await readFile(`site/${f}`, 'utf8');
+    assert.doesNotMatch(src, /<[^>]*\son[a-z]+\s*=/i, `${f}: inline event handler (blocked by CSP)`);
+    assert.doesNotMatch(src, /javascript:/i, `${f}: javascript: URL`);
+  }
+});
