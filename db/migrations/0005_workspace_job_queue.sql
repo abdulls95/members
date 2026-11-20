@@ -94,9 +94,11 @@ CREATE POLICY workspace_job_requester_or_worker ON internal.workspace_jobs
 GRANT SELECT ON public.resource_profiles, public.tenant_quotas TO cornod_app;
 GRANT USAGE ON SCHEMA internal TO cornod_app, cornod_worker;
 GRANT SELECT, INSERT ON internal.workspace_jobs TO cornod_app;
-GRANT SELECT, UPDATE ON internal.workspace_jobs TO cornod_worker;
+GRANT SELECT ON internal.workspace_jobs TO cornod_worker;
+GRANT UPDATE (state, attempt_count, available_at, lease_expires_at, lease_token_hash, last_error_code, updated_at, completed_at) ON internal.workspace_jobs TO cornod_worker;
 GRANT SELECT ON public.resource_profiles, public.workspace_templates TO cornod_worker;
-GRANT SELECT, UPDATE ON public.workspaces TO cornod_worker;
+GRANT SELECT ON public.workspaces TO cornod_worker;
+GRANT UPDATE (state, expires_at, updated_at) ON public.workspaces TO cornod_worker;
 GRANT SELECT, INSERT ON public.workspace_events TO cornod_worker;
 GRANT USAGE, SELECT ON SEQUENCE public.workspace_events_id_seq TO cornod_worker;
 
