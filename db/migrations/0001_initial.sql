@@ -218,6 +218,6 @@ GRANT SELECT, INSERT ON public.terminal_tickets TO cornod_app;
 GRANT UPDATE (consumed_at, revoked_at) ON public.terminal_tickets TO cornod_app;
 GRANT SELECT, INSERT ON public.audit_events TO cornod_app;
 GRANT SELECT, INSERT ON public.usage_ledger TO cornod_app;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cornod_app;
+GRANT USAGE, SELECT ON SEQUENCE public.workspace_events_id_seq, public.audit_events_id_seq TO cornod_app;
 
 COMMIT;
