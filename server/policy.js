@@ -39,7 +39,7 @@ export function decodeCursor(value) {
     if (!parsed || typeof parsed !== "object" || typeof parsed.time !== "string" || typeof parsed.id !== "string") {
       throw new Error("invalid cursor shape");
     }
-    if (Number.isNaN(Date.parse(parsed.time)) || !( /^[0-9a-f-]{36}$/i.test(parsed.id) || /^[0-9]+$/.test(parsed.id) )) {
+    if (!( /^[0-9]{1,16}$/.test(parsed.time) || !Number.isNaN(Date.parse(parsed.time)) ) || !( /^[0-9a-f-]{36}$/i.test(parsed.id) || /^[0-9]+$/.test(parsed.id) )) {
       throw new Error("invalid cursor values");
     }
     return parsed;
