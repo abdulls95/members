@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server/index.js",
-    "check": "node --check server/index.js && node --check server/app.js && node --check server/auth.js && node --check server/config.js && node --check server/db.js && node --check server/policy.js",
+    "check": "node --check server/index.js && node --check server/app.js && node --check server/auth.js && node --check server/config.js && node --check server/db.js && node --check server/policy.js && node --check server/worker-queue.js",
     "test": "node --test"
   },
   "dependencies": {

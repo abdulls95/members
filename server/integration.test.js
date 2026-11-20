@@ -5,9 +5,11 @@ import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import { createTokenVerifier } from "./auth.js";
 import { createApiServer } from "./app.js";
 import { createPool } from "./db.js";
+import { claimNextJob, completeJob, failJob, LeaseLostError, renewJobLease } from "./worker-queue.js";
 
 const databaseUrl = process.env.API_TEST_DATABASE_URL;
-test("OIDC-authenticated API enforces tenant membership and role boundaries", { skip: !databaseUrl }, async (t) => {
+const workerDatabaseUrl = process.env.API_TEST_WORKER_DATABASE_URL;
+test("OIDC-authenticated API enforces tenant membership and role boundaries", { skip: !databaseUrl || !workerDatabaseUrl }, async (t) => {
   const issuer = "https://identity.example.invalid";
   const audience = "cornod-api";
   const requiredScope = "cornod:api";
@@ -40,6 +42,7 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
     trustProxy: false
   };
   const pool = createPool(config);
+  const workerPool = createPool({ databaseUrl: workerDatabaseUrl, databaseSsl: "disable" });
   const verifyAccessToken = createTokenVerifier(config);
   const server = createApiServer({ config, pool, verifyAccessToken });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -73,6 +76,7 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   t.after(async () => {
     await new Promise((resolve) => server.close(resolve));
     await pool.end();
+    await workerPool.end();
     await new Promise((resolve) => jwksServer.close(resolve));
   });
 
@@ -190,6 +194,36 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   ]);
   const concurrentStatuses = concurrentResults.map((response) => response.status).sort((a, b) => a - b);
   assert.deepEqual(concurrentStatuses, [202, 429]);
+
+  // The isolated worker role can lease a job, but only its opaque lease token can mutate it.
+  const lease = await claimNextJob(workerPool, { leaseSeconds: 60 });
+  assert.ok(lease);
+  assert.equal(lease.action, "CREATE");
+  assert.equal(lease.attemptCount, 1);
+  const renewedUntil = await renewJobLease(workerPool, lease, { leaseSeconds: 90 });
+  assert.ok(new Date(renewedUntil).getTime() > Date.now());
+  await assert.rejects(
+    completeJob(workerPool, { jobId: lease.jobId, leaseToken: "A".repeat(43) }),
+    (error) => error instanceof LeaseLostError
+  );
+  await workerPool.query(
+    "UPDATE internal.workspace_jobs SET lease_expires_at = now() - interval '1 second' WHERE id = $1",
+    [lease.jobId]
+  );
+  const reclaimedLease = await claimNextJob(workerPool, { leaseSeconds: 60 });
+  assert.ok(reclaimedLease);
+  assert.equal(reclaimedLease.jobId, lease.jobId);
+  assert.equal(reclaimedLease.attemptCount, 2);
+  await assert.rejects(completeJob(workerPool, lease), (error) => error instanceof LeaseLostError);
+  const completed = await completeJob(workerPool, reclaimedLease);
+  assert.equal(completed.state, "SUCCEEDED");
+
+  const retryLease = await claimNextJob(workerPool, { leaseSeconds: 60 });
+  assert.ok(retryLease);
+  const retry = await failJob(workerPool, retryLease, { errorCode: "TEST_TRANSIENT_FAILURE", retryBaseSeconds: 5 });
+  assert.equal(retry.state, "QUEUED");
+  assert.equal(retry.last_error_code, "TEST_TRANSIENT_FAILURE");
+  assert.ok(new Date(retry.available_at).getTime() > Date.now());
 
   const wrongScope = await token("api-test-owner", "openid profile");
   const denied = await get("/v1/me", wrongScope);
