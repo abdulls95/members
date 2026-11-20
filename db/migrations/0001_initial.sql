@@ -171,7 +171,7 @@ BEGIN
       table_name
     );
   END LOOP;
-END $;
+END $$;
 
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenants FORCE ROW LEVEL SECURITY;
