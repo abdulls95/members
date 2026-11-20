@@ -76,6 +76,31 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN
     NULL;
   END;
+  IF has_table_privilege('cornod_app', 'public.usage_ledger', 'INSERT')
+     OR has_sequence_privilege('cornod_app', 'public.usage_ledger_id_seq', 'USAGE') THEN
+    RAISE EXCEPTION 'API role can forge usage records or consume metering sequence';
+  END IF;
+  BEGIN
+    INSERT INTO public.workspace_events (tenant_id, workspace_id, event_type, actor_id, request_id)
+    VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-1111-4111-8111-111111111111', 'CREATED', '30000000-0000-4000-8000-000000000003', 'spoofed-event');
+    RAISE EXCEPTION 'workspace event actor spoof unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  BEGIN
+    INSERT INTO public.audit_events (tenant_id, actor_id, action, target_type, outcome, request_id, policy_version)
+    VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '30000000-0000-4000-8000-000000000003', 'spoofed', 'workspace', 'SUCCESS', 'spoofed-audit', 'test-v1');
+    RAISE EXCEPTION 'audit actor spoof unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  BEGIN
+    INSERT INTO public.workspaces (tenant_id, project_id, template_id, template_version, display_name, created_by, expires_at)
+    VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'linux-base', 1, 'Spoofed creator', '30000000-0000-4000-8000-000000000003', now() + interval '1 hour');
+    RAISE EXCEPTION 'workspace creator spoof unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
 END $$;
 
 ROLLBACK;
