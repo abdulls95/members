@@ -31,6 +31,7 @@
 
 ## Phase 2 — Isolated execution
 - [ ] Select microVM or equivalently strong runtime isolation and hardened base images.
+- [x] Add a typed, quota-aware workspace request API and idempotent job queue.
 - [ ] Build an orchestrator with typed, allowlisted operations only.
 - [ ] Implement quotas, TTLs, lifecycle cleanup and quarantine.
 - [ ] Build a terminal gateway with one-time short-lived attachment tickets.
