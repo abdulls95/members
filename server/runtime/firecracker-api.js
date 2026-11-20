@@ -36,7 +36,7 @@ async function assertRegularFile(root, candidate, code) {
   } catch {
     throw new FirecrackerApiError(code);
   }
-  if (!stat.isFile() || stat.isSymbolicLink() || !inside(root, real)) {
+  if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o6022) !== 0 || !inside(root, real)) {
     throw new FirecrackerApiError(code);
   }
 }
