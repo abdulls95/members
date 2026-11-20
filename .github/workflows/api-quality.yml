@@ -1,7 +1,7 @@
 name: CORNOD API quality checks
 on:
   push:
-    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline", "cornod/workspace-queue-foundation", "cornod/security-review-round2"]
+    branches: ["cornod/api-service-foundation", "cornod/project-scope-hardening", "cornod/security-pipeline", "cornod/workspace-queue-foundation", "cornod/security-review-round2", "cornod/worker-lease-engine"]
     paths:
       - "server/**"
       - "db/**"
@@ -52,7 +52,7 @@ jobs:
       - name: Provision isolated runtime worker role
         env:
           PGPASSWORD: test-only-password
-        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
+        run: psql -h localhost -U postgres -d cornod_test -v ON_ERROR_STOP=1 -c "CREATE ROLE cornod_worker LOGIN PASSWORD "test-only-worker-password" NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
       - name: Apply schema migrations
         env:
           PGPASSWORD: test-only-password
@@ -66,6 +66,7 @@ jobs:
       - name: Run unit, HTTP and PostgreSQL integration tests
         env:
           API_TEST_DATABASE_URL: postgresql://cornod_app:test-only-password@127.0.0.1:5432/cornod_test
+          API_TEST_WORKER_DATABASE_URL: postgresql://cornod_worker:test-only-worker-password@127.0.0.1:5432/cornod_test
         run: npm test
       - name: Generate CycloneDX dependency SBOM
         run: npm sbom --omit=dev --sbom-format=cyclonedx > sbom.cdx.json
