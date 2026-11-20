@@ -41,6 +41,21 @@ async function assertRegularFile(root, candidate, code) {
   }
 }
 
+async function assertUnixSocket(root, candidate) {
+  if (!isAbsolute(candidate) || !inside(root, candidate)) throw new FirecrackerApiError("FIRECRACKER_SOCKET_PATH_INVALID");
+  let stat;
+  let real;
+  try {
+    stat = await lstat(candidate);
+    real = await realpath(candidate);
+  } catch {
+    throw new FirecrackerApiError("FIRECRACKER_SOCKET_UNAVAILABLE");
+  }
+  if (!stat.isSocket() || stat.isSymbolicLink() || !inside(root, real)) {
+    throw new FirecrackerApiError("FIRECRACKER_SOCKET_PATH_INVALID");
+  }
+}
+
 function validateSpec(spec) {
   if (!spec || typeof spec !== "object") throw new TypeError("workspace spec is required");
   const id = spec.workspaceId;
@@ -138,6 +153,7 @@ export class FirecrackerApiClient {
     await assertRegularFile(jailRoot, kernelPath, "FIRECRACKER_KERNEL_IMAGE_INVALID");
     await assertRegularFile(jailRoot, rootfsPath, "FIRECRACKER_ROOTFS_IMAGE_INVALID");
     await assertRegularFile(jailRoot, workspacePath, "FIRECRACKER_WORKSPACE_DISK_INVALID");
+    await assertUnixSocket(this.socketRoot, socketPath);
 
     const api = [
       ["/machine-config", {
