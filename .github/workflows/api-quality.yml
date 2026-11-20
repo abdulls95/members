@@ -65,3 +65,25 @@ jobs:
         run: docker build --pull --tag cornod-api:ci .
       - name: Verify container runs as non-root
         run: test "$(docker image inspect --format='{{.Config.User}}' cornod-api:ci)" = "node"
+      - name: Boot container and verify health endpoints
+        env:
+          TEST_DATABASE_URL: postgresql://cornod_app:test-only-password@127.0.0.1:5432/cornod_test
+        run: |
+          docker run --detach --network host --name cornod-api-ci \
+            --env NODE_ENV=test \
+            --env PORT=8080 \
+            --env DATABASE_URL="$TEST_DATABASE_URL" \
+            --env DATABASE_SSL=disable \
+            --env OIDC_ISSUER=https://identity.example.invalid \
+            --env OIDC_AUDIENCE=cornod-api \
+            --env OIDC_JWKS_URL=https://identity.example.invalid/.well-known/jwks.json \
+            --env OIDC_REQUIRED_SCOPE=cornod:api \
+            --env CORS_ORIGINS=https://app.cornod.invalid \
+            cornod-api:ci
+          trap 'docker rm --force cornod-api-ci >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/health/live >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8080/health/live
+          curl --fail --silent http://127.0.0.1:8080/health/ready
