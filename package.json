@@ -1,0 +1,18 @@
+{
+  "name": "cornod-control-plane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "check": "node --check server/index.js && node --check server/app.js && node --check server/auth.js && node --check server/config.js && node --check server/db.js && node --check server/policy.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "jose": "6.1.0",
+    "pg": "8.16.3"
+  }
+}
