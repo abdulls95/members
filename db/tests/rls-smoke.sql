@@ -40,14 +40,10 @@ BEGIN
   IF (SELECT count(*) FROM public.users) <> 1 THEN RAISE EXCEPTION 'user self-access failed'; END IF;
   IF (SELECT count(*) FROM public.terminal_tickets) <> 1 THEN RAISE EXCEPTION 'terminal ticket owner isolation failed'; END IF;
   IF (SELECT count(*) FROM public.workspace_templates WHERE id = 'linux-base') <> 1 THEN RAISE EXCEPTION 'approved template catalog read failed'; END IF;
-  BEGIN
-    UPDATE public.memberships SET role = 'OPERATOR'
-    WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-      AND user_id = '30000000-0000-4000-8000-000000000003';
-    RAISE EXCEPTION 'membership update without admin context unexpectedly succeeded';
-  EXCEPTION WHEN insufficient_privilege THEN
-    NULL;
-  END;
+  UPDATE public.memberships SET role = 'OPERATOR'
+  WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    AND user_id = '30000000-0000-4000-8000-000000000003';
+  IF FOUND THEN RAISE EXCEPTION 'membership update without admin context unexpectedly succeeded'; END IF;
   PERFORM set_config('cornod.membership_manage', 'true', true);
   UPDATE public.memberships SET role = 'OPERATOR'
   WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
