@@ -22,6 +22,7 @@ The site is a static frontend preview only. It is not a private workspace or a p
 - Bilingual curated tool catalogue with risk labels, including Sherlock, Nmap, sqlmap and developer tools (catalogue preview only).
 - Executable PostgreSQL migrations for tenant isolation, restricted API/worker roles, short-lived ticket scoping, worker-only queue claims and append-only audit/usage permissions.
 - CI-backed PostgreSQL isolation, worker-claim, signed-token API and container smoke tests against ephemeral services.
+- Tested Firecracker API adapter over per-VM Unix sockets, with a read-only host preflight script for KVM/cgroup/Jailer requirements.
 - Architecture, threat model and release-blocking security checklist.
 
 ## Not implemented
