@@ -13,6 +13,7 @@ const store = read("assets/js/core/store.js");
 const pages = read("assets/js/views/pages.js");
 const catalog = read("assets/js/data/catalog.js");
 const openapi = read("openapi/cornod-v1.yaml");
+const firecracker = read("server/runtime/firecracker-api.js");
 
 assert.match(html, /<html lang="ar" dir="rtl">/, "Arabic RTL must be the default");
 assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/, "Preview must discourage indexing");
@@ -53,10 +54,13 @@ assert.match(openapi, /^openapi: 3[.]1[.]0/m, "OpenAPI contract must declare ver
 assert.match(openapi, /additionalProperties: false/, "Request schemas must explicitly reject unknown fields");
 assert.match(openapi, /workspace-jobs/, "Workspace job status contract is missing");
 assert.match(openapi, /bearerAuth/, "OpenAPI must match OIDC bearer authentication");
+assert.match(firecracker, /socketPath/, "Firecracker API must use a Unix socket");
+assert.match(firecracker, /ENDPOINTS/, "Firecracker API paths must be allowlisted");
+assert.doesNotMatch(firecracker, /child_process|spawn\\s*\\(|exec\\s*\\(/, "Firecracker API adapter must not spawn host processes");
 for (const path of [
   "docs/ARCHITECTURE.md", "docs/THREAT-MODEL.md", "docs/ROADMAP.md",
   "docs/API-CONTRACT.md", "docs/AUTHORIZATION-MATRIX.md", "docs/DATA-MODEL.md",
-  "docs/SECURITY-ACCEPTANCE.md", "docs/WORKER-QUEUE.md"
+  "docs/SECURITY-ACCEPTANCE.md", "docs/WORKER-QUEUE.md", "docs/FIRECRACKER-RUNTIME.md"
 ]) {
   assert.ok(existsSync(new URL("../" + path, import.meta.url)), path + " missing");
 }
