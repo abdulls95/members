@@ -75,8 +75,11 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   const workspaces = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", ownerToken);
   assert.equal(workspaces.status, 200);
   const workspaceBody = await workspaces.json();
-  assert.equal(workspaceBody.data.items.length, 1);
+  assert.equal(workspaceBody.data.items.length, 2);
   assert.equal(workspaceBody.data.items[0].display_name, "API Test Workspace");
+
+  const projects = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", ownerToken);
+  assert.equal((await projects.json()).data.items.length, 2);
 
   const audit = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events", ownerToken);
   assert.equal(audit.status, 200);
@@ -90,6 +93,10 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
   assert.equal(otherTenant.status, 404);
 
   const developerToken = await token("api-test-developer");
+  const developerProjects = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/projects", developerToken);
+  assert.equal((await developerProjects.json()).data.items.length, 1);
+  const developerWorkspaces = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/workspaces", developerToken);
+  assert.equal((await developerWorkspaces.json()).data.items.length, 1);
   const developerAudit = await get("/v1/tenants/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/audit-events", developerToken);
   assert.equal(developerAudit.status, 403);
 
