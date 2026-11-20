@@ -1,0 +1,274 @@
+openapi: 3.1.0
+info:
+  title: CORNOD Control Plane API
+  version: 1.0.0
+  description: Proposed contract only. No production API is currently deployed.
+servers:
+  - url: https://api.example.invalid/v1
+    description: Placeholder; replace only after an approved backend is deployed.
+security:
+  - sessionCookie: []
+paths:
+  /health/live:
+    get:
+      security: []
+      summary: Process liveness
+      responses:
+        "200":
+          description: Process is alive; response contains no sensitive dependency details.
+  /me:
+    get:
+      summary: Current authenticated identity and tenant memberships
+      responses:
+        "200":
+          description: Current identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentIdentity"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /tenants/{tenantId}/workspaces:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      summary: List workspaces visible to the caller
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        "200":
+          description: Authorized workspace page
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Workspace"
+                  nextCursor:
+                    type: [string, "null"]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      summary: Create a workspace from a server-approved template
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspace"
+      responses:
+        "202":
+          description: Workspace creation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Quota or lifecycle conflict
+  /tenants/{tenantId}/workspaces/{workspaceId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Read authorized workspace metadata
+      responses:
+        "200":
+          description: Workspace metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Not found or not visible to caller
+    delete:
+      summary: Destroy an authorized workspace
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: Destruction accepted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Workspace state does not permit deletion
+  /tenants/{tenantId}/workspaces/{workspaceId}/actions:
+    post:
+      summary: Perform an allowlisted workspace lifecycle action
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [start, stop, restart]
+      responses:
+        "202":
+          description: Action accepted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Invalid lifecycle transition
+  /tenants/{tenantId}/workspaces/{workspaceId}/terminal-tickets:
+    post:
+      summary: Issue a single-use terminal attachment ticket
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "201":
+          description: Short-lived ticket; never place it in a URL or logs
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ticket, expiresIn]
+                properties:
+                  ticket:
+                    type: string
+                    minLength: 32
+                  expiresIn:
+                    type: integer
+                    maximum: 30
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Workspace is not ready for terminal attachment
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-cornod_session
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+  responses:
+    Unauthorized:
+      description: Authentication required
+    Forbidden:
+      description: Access denied without disclosing cross-tenant object existence
+    BadRequest:
+      description: Invalid or unsupported request
+  schemas:
+    CurrentIdentity:
+      type: object
+      required: [userId, memberships]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        memberships:
+          type: array
+          items:
+            type: object
+            required: [tenantId, role]
+            properties:
+              tenantId:
+                type: string
+                format: uuid
+              role:
+                type: string
+                enum: [TENANT_OWNER, TENANT_ADMIN, OPERATOR, DEVELOPER, AUDITOR]
+    CreateWorkspace:
+      type: object
+      additionalProperties: false
+      required: [templateId, displayName, resourceProfile]
+      properties:
+        templateId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 64
+        resourceProfile:
+          type: string
+          enum: [starter, standard]
+        projectId:
+          type: [string, "null"]
+          format: uuid
+    Workspace:
+      type: object
+      required: [id, tenantId, displayName, templateId, state, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+          maxLength: 64
+        templateId:
+          type: string
+        state:
+          type: string
+          enum: [REQUESTED, POLICY_CHECKED, PROVISIONING, READY, ACTIVE, TERMINATING, DESTROYED, REJECTED, QUARANTINED]
+        createdAt:
+          type: string
+          format: date-time
