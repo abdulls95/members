@@ -11,7 +11,7 @@ CREATE ROLE cornod_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYP
 CREATE ROLE cornod_worker LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;
 ```
 
-Use separate strong credentials from a secret manager. The API role can read tenant data and create typed workspace requests, but cannot update queue state, change membership or alter project assignments. The worker role can claim/update queue jobs and update workspace lifecycle metadata. Neither role owns tables or bypasses RLS.
+Use separate strong credentials from a secret manager. The API role can read tenant data and create typed workspace requests, but cannot update queue state, change membership or alter project assignments. The worker role can claim/update queue jobs and update only the approved workspace lifecycle columns. Neither role owns tables or bypasses RLS.
 
 ## API transaction context
 
@@ -22,7 +22,7 @@ For each API request, the trusted service must:
 4. Set transaction-local `cornod.oidc_issuer`, `cornod.oidc_subject`, `cornod.user_id` and, for tenant routes, `cornod.tenant_id`.
 5. Use parameterized SQL, enforce action-level role checks and commit or roll back.
 
-The general API role has no membership or project-assignment write privileges. Invitations, role changes, revocations and assignment changes remain disabled until separately reviewed administrative procedures exist.
+The general API role has no membership or project-assignment write privileges. Invitations, role changes, revocations and assignment changes remain disabled until separately reviewed administrative procedures exist. API-created workspaces must use the authenticated user as `created_by`; audit/event inserts must identify the verified actor.
 
 ## Worker boundary
 
@@ -32,6 +32,6 @@ The queue is currently not consumed by a deployed worker. A `QUEUED` job does no
 
 ## Apply and test
 
-Apply `migrations/0001_initial.sql` through `0005_workspace_job_queue.sql` using a migration-owner account after provisioning both roles. Never run migrations with the runtime role.
+Apply `migrations/0001_initial.sql through 0006_workspace_actor_scope.sql` through `0005_workspace_job_queue.sql` using a migration-owner account after provisioning both roles. Never run migrations with the runtime role.
 
 CI applies all migrations to an ephemeral PostgreSQL 16 instance and tests tenant isolation, user-scoped membership/project/ticket/job visibility, worker-only queue access, append-only audit/usage records, and authenticated API behavior.
