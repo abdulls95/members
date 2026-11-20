@@ -1,7 +1,7 @@
 name: CORNOD quality checks
 on:
   push:
-    branches: ["main", "cornod-build"]
+    branches: ["main", "cornod-build", "cornod/industrial-ui-refresh"]
   pull_request:
     branches: ["main"]
 permissions:
@@ -17,6 +17,9 @@ jobs:
         with:
           node-version: 22
       - name: Check JavaScript syntax
-        run: node --check assets/app.js
+        run: |
+          for file in $(find assets/js -type f -name "*.js"); do node --check "$file"; done
+      - name: Test UI modules and terminal safety
+        run: node --test tests/unit/*.test.mjs
       - name: Validate frontend, navigation and security guardrails
         run: node scripts/validate.mjs

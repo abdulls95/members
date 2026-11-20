@@ -14,11 +14,12 @@ The site is a static frontend preview only. It is not a private workspace or a p
 
 ## Current implementation
 
-- Responsive Arabic/English control-center interface.
+- Rebuilt industrial Arabic/English control center with 14 routes: dashboard, workspaces, terminal, files, marketplace, command library, AI, OSINT, labs, admin preview, settings and status.
 - Accessible navigation behavior and a restrictive frontend Content Security Policy.
-- Static validation and GitHub Actions quality checks.
+- Static validation, CSP checks, UI/terminal unit tests and GitHub Actions quality checks.
 - OIDC-verifying control-plane API foundation, tenant-scoped routes and a quota-aware workspace request queue.
 - Tenant authorization matrix and provider-neutral logical data model.
+- Bilingual curated tool catalogue with risk labels, including Sherlock, Nmap, sqlmap and developer tools (catalogue preview only).
 - Executable PostgreSQL migrations for tenant isolation, restricted API/worker roles, short-lived ticket scoping, worker-only queue claims and append-only audit/usage permissions.
 - CI-backed PostgreSQL isolation, worker-claim, signed-token API and container smoke tests against ephemeral services.
 - Architecture, threat model and release-blocking security checklist.
@@ -28,7 +29,7 @@ The site is a static frontend preview only. It is not a private workspace or a p
 - No identity provider, browser login/BFF, MFA enrollment or live tenant accounts have been configured. The API verifies externally issued OIDC bearer tokens when configured.
 - No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
 - No deployed background worker, Linux runtime, isolated workspaces or executable terminal. The tested queue lease engine does not launch workloads. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job.
-- No tool installation or command execution.
+- Tool installation and command execution remain disabled until the isolated runtime and authorization controls are deployed.
 - No billing, metering service or production audit pipeline.
 
 The interface deliberately does not simulate successful backend operations.

@@ -2,11 +2,12 @@
 
 ## Phase 0 — Engineering foundation
 - [x] Separate development branch from the legacy default branch.
-- [x] Initial Arabic/English responsive control-plane UI.
+- [x] Industrial Arabic/English responsive control center with 14 navigable product modules.
 - [x] Explicit non-executable preview states.
 - [x] Architecture and threat-model baselines.
 - [x] Navigation accessibility behavior and Escape-to-close support.
-- [x] Static validation for duplicate IDs, internal navigation targets and frontend secret patterns.
+- [x] Static validation for routes, frontend secrets, strict CSP, inline handlers and terminal disconnected state.
+- [x] UI unit tests for bilingual copy, route parsing, RBAC preview, safe HTML escaping and disconnected terminal behavior.
 - [x] Quality workflow runs on pushes to main and pull requests.
 - [x] Proposed API contract, OpenAPI document, tenant role matrix, logical data model and release security gates.
 - [ ] Validate OpenAPI document with a dedicated schema validator in CI.
@@ -46,10 +47,12 @@
 
 ## Phase 3 — Product modules
 - [ ] Workspace templates and persistent project storage.
-- [ ] Curated developer/security tool catalog with provenance and version pinning.
+- [x] Bilingual preview catalogue for developer/security tools with risk labels, including Sherlock.
+- [ ] Server-owned install catalogue with immutable image digests, provenance and version pinning.
 - [ ] Sandboxed labs with explicit authorization scope.
 - [ ] Usage metering, quotas and billing integration.
-- [ ] User-facing operational status and support workflows.
+- [x] User-facing preview modules for dashboard, OSINT, labs, AI, files, commands and operational status.
+- [ ] Live operational status and support workflows connected to backend services.
 
 ## Phase 4 — Release readiness
 - [ ] Automated unit, integration, authorization and abuse tests.
