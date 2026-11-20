@@ -140,6 +140,18 @@ test("OIDC-authenticated API enforces tenant membership and role boundaries", { 
     resourceProfile: "starter",
     projectId: "aaaaaaaa-0000-4000-8000-000000000001"
   };
+  const unsupportedCommand = await post(tenantPath + "/workspaces", ownerToken, "owner-unsupported-field-0001", {
+    ...ownerWorkspaceRequest, command: "id"
+  });
+  assert.equal(unsupportedCommand.status, 400);
+
+  const invalidMethod = await fetch(base + tenantPath + "/projects", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + ownerToken, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  assert.equal(invalidMethod.status, 404);
+
   const ownerCreate = await post(tenantPath + "/workspaces", ownerToken, "owner-create-workspace-0001", ownerWorkspaceRequest);
   assert.equal(ownerCreate.status, 202);
   const ownerCreateBody = await ownerCreate.json();
