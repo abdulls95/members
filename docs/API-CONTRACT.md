@@ -74,3 +74,8 @@ Do not return stack traces, infrastructure names, secret values, internal IPs or
 - Breaking request or response changes require a new version.
 - Unknown fields with security impact are rejected, not silently forwarded.
 - The OpenAPI file in `openapi/cornod-v1.yaml` is the machine-readable companion contract.
+
+
+## Not exposed by the current API
+
+Workspace start/stop/restart, deletion, terminal tickets, tool execution, membership administration and browser login are design targets only. They are not routes in the current API implementation.
