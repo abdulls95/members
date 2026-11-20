@@ -109,7 +109,7 @@ RESET ROLE;
 
 SET ROLE cornod_worker;
 BEGIN;
-DO $
+DO $$
 DECLARE
   claimed internal.workspace_jobs;
   token_hash bytea := decode(repeat('c', 64), 'hex');
@@ -128,7 +128,7 @@ BEGIN
   SET state = 'CANCELLED', lease_expires_at = NULL, lease_token_hash = NULL, updated_at = now()
   WHERE id = claimed.id;
   IF NOT FOUND THEN RAISE EXCEPTION 'worker cannot update a claimed job'; END IF;
-END $;
+END $$;
 ROLLBACK;
 RESET ROLE;
 
