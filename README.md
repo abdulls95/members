@@ -17,15 +17,15 @@ The site is a static frontend preview only. It is not a private workspace or a p
 - Responsive Arabic/English control-center interface.
 - Accessible navigation behavior and a restrictive frontend Content Security Policy.
 - Static validation and GitHub Actions quality checks.
-- Proposed control-plane API contract and OpenAPI description.
+- Implemented OIDC bearer API foundation, current-user and tenant-scoped read routes, plus a quota-aware workspace request queue.
 - Proposed tenant authorization matrix and provider-neutral logical data model.
-- Executable PostgreSQL migrations for tenant-owned records, row-level security, short-lived terminal ticket scoping and append-only audit/usage permissions.
-- CI-backed PostgreSQL isolation smoke tests against an ephemeral database.
+- Executable PostgreSQL migrations for tenant-owned records, row-level security, worker job leases, actor-scoped audit/events and append-only usage permissions.
+- CI-backed PostgreSQL isolation, worker queue claim, signed-token API and container smoke tests against ephemeral services.
 - Architecture, threat model and release-blocking security checklist.
 
 ## Not implemented
 
-- No identity provider, browser login, MFA enrollment or live tenant accounts have been configured. The repository now contains an OIDC-verifying, read-only API service foundation.
+- No identity provider, browser login, MFA enrollment or live tenant accounts have been configured. The repository contains an OIDC-verifying API service with tenant-scoped reads and quota-aware workspace request queuing, but no identity provider is configured or deployed.
 - No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
 - No Linux runtime, isolated workspaces or executable terminal. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job; no worker launches it yet.
 - No tool installation or command execution.
@@ -51,7 +51,8 @@ The interface deliberately does not simulate successful backend operations.
 - [Logical data model](docs/DATA-MODEL.md)
 - [Database migrations and security model](db/README.md)
 - [API service implementation and deployment boundary](docs/API-SERVICE.md)
-- [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)\n- [Security reporting policy](SECURITY.md)
+- [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)
+- [Security reporting policy](SECURITY.md)
 - [Delivery roadmap](docs/ROADMAP.md)
 
 ## Development
