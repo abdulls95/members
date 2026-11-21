@@ -18,7 +18,6 @@ export const home = {
       <p>${t('home.lead')}</p>
       <div class="actions">
         <a class="btn primary" href="#/learn">${raw(icon('terminal'))}${t('home.ctaLearn')}</a>
-        <a class="btn ghost" href="#/terminal">${raw(icon('terminal'))}${t('home.ctaTerminal')}</a>
         <a class="btn ghost" href="#/status">${raw(icon('status'))}${t('home.ctaStatus')}</a>
       </div>
     </section>
