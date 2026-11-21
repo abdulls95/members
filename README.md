@@ -43,6 +43,12 @@ The interface deliberately does not simulate successful backend operations.
 - Enforce tenant and object-level authorization on every API request.
 - Do not enable public signup or workload execution until the security acceptance gates have been independently verified.
 
+## Private API staging package
+
+A hardened Docker Compose definition for the control-plane API is included in [deploy/](deploy/README.md), along with a non-secret environment template and CI syntax validation. This package is **not deployed**, and it deliberately has no worker, public sign-in, terminal execution, or microVM host. The frontend continues to show an unavailable backend until an authenticated API and isolated runtime are actually deployed and verified.
+
+The legacy shareholders Supabase project has unrelated tables and existing security-advisor findings. CORNOD must use a dedicated database or a reviewed isolation/migration plan; do not attach it to the legacy project as-is.
+
 ## Engineering documents
 
 - [Target architecture](docs/ARCHITECTURE.md)
