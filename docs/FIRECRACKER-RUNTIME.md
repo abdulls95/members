@@ -74,7 +74,7 @@ The API socket is a Unix-domain socket inside the Jailer chroot. It is never bou
 
 ## Worker and failure semantics
 
-The current repository contains the PostgreSQL queue claim function, hashed lease-token library and a Firecracker Unix-socket API client. It does **not** yet contain the privileged host supervisor, network/volume allocator, guest agent or deployed worker process.
+The current repository contains the PostgreSQL queue claim function, hashed lease-token library, Firecracker Unix-socket API client and a bounded guest-agent protocol library. It does **not** yet contain the privileged host supervisor, network/volume allocator, guest-agent daemon or deployed worker process.
 
 Before a workspace may transition to `READY`, the future worker must:
 - verify the queue lease and revalidate the tenant/workspace state;
@@ -98,7 +98,7 @@ Every create operation must be idempotent by workspace ID. A retry must discover
 - [ ] Host supervisor and Jailer lifecycle management.
 - [ ] Network namespace/tap allocator and default-deny egress gateway.
 - [ ] Encrypted workspace volume allocator and cleanup verification.
-- [ ] Guest init/agent, vsock protocol and terminal gateway.
+- [x] Bounded guest-agent message validator and typed Sherlock request builder (protocol library only; no guest daemon or transport authentication yet).\n- [ ] Guest init/agent daemon, authenticated vsock transport and terminal gateway.
 - [ ] End-to-end Firecracker host test on a KVM-capable staging node.
 - [ ] Independent security review before enabling tenant workloads.
 
