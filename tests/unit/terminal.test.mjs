@@ -69,3 +69,10 @@ test('websocket adapter: ticket failure surfaces an error and stays disconnected
   assert.equal(a.state, 'disconnected');
   assert.match(lines.at(-1)[1], /session ticket/);
 });
+
+test('terminal view initiates connection for configured and offline adapters', async () => {
+  const { terminal } = await import('../../assets/js/views/terminal.js');
+  const source = terminal.mount.toString();
+  assert.match(source, /adapter\\.connect\\(\\)/);
+  assert.doesNotMatch(source, /if\\s*\\(!backendConfigured\\(\\)\\)\\s*adapter\\.connect\\(\\)/);
+});
