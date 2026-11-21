@@ -6,7 +6,7 @@
   "engines": { "node": ">=22.0.0" },
   "scripts": {
     "start": "node server/index.js",
-    "check": "node --check server/index.js && node --check server/app.js && node --check server/auth.js && node --check server/config.js && node --check server/db.js && node --check server/policy.js && node --check server/worker-queue.js && node --check server/runtime/firecracker-api.js && node --check server/runtime/guest-agent-protocol.js",
+    "check": "node --check server/index.js && node --check server/app.js && node --check server/auth.js && node --check server/config.js && node --check server/db.js && node --check server/policy.js && node --check server/worker-queue.js && node --check server/runtime/firecracker-api.js && node --check server/runtime/guest-agent-protocol.js && node --check server/runtime/egress-policy.js",
     "test": "node --test"
   },
   "dependencies": { "jose": "6.2.17", "pg": "8.23.1" }
