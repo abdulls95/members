@@ -6,6 +6,7 @@ import { icon, LOGO } from './core/icons.js';
 import { esc } from './core/ui.js';
 import * as P from './views/pages.js';
 import { terminal } from './views/terminal.js';
+import { learn } from './views/learn.js';
 
 // Route table. `perm` = permission needed to view (UI gating only; the API enforces for real).
 export const ROUTES = [
@@ -14,6 +15,7 @@ export const ROUTES = [
   { path: '/status', key: 'status', icon: 'status', group: 'platform', view: P.status },
   { path: '/workspaces', key: 'workspaces', icon: 'workspaces', group: 'build', view: P.workspaces },
   { path: '/terminal', key: 'terminal', icon: 'terminal', group: 'build', view: terminal },
+  { path: '/learn', key: 'learn', icon: 'terminal', group: 'build', view: learn },
   { path: '/files', key: 'files', icon: 'files', group: 'build', view: P.files },
   { path: '/marketplace', key: 'marketplace', icon: 'marketplace', group: 'build', view: P.marketplace },
   { path: '/commands', key: 'commands', icon: 'commands', group: 'build', view: P.commands },
