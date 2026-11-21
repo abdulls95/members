@@ -13,8 +13,8 @@ for (const [subnet, prefix] of [
 const ipv6Denied = new net.BlockList();
 for (const [subnet, prefix] of [
   ["::", 128], ["::1", 128], ["::ffff:0:0", 96],
-  ["64:ff9b:1::", 48], ["100::", 64], ["2001:db8::", 32],
-  ["2002::", 16], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]
+  ["64:ff9b:1::", 48], ["100::", 64], ["2001::", 23],
+  ["2001:db8::", 32], ["2002::", 16], ["3fff::", 20], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]
 ]) ipv6Denied.addSubnet(subnet, prefix, "ipv6");
 
 const ipv6GlobalUnicast = new net.BlockList();
