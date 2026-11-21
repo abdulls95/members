@@ -1,8 +1,17 @@
-const required = ["DATABASE_URL", "OIDC_ISSUER", "OIDC_AUDIENCE", "OIDC_JWKS_URL", "OIDC_REQUIRED_SCOPE", "CORS_ORIGINS"];
+const required = ["DATABASE_URL", "OIDC_ISSUER", "OIDC_AUDIENCE", "OIDC_JWKS_URL", "CORS_ORIGINS"];
 
 export function loadConfig(env = process.env) {
   const missing = required.filter((key) => !String(env[key] || "").trim());
   if (missing.length) throw new Error("Missing required environment variables: " + missing.join(", "));
+
+  const requiredScope = String(env.OIDC_REQUIRED_SCOPE || "").trim();
+  const requiredRole = String(env.OIDC_REQUIRED_ROLE || "").trim();
+  if (Boolean(requiredScope) === Boolean(requiredRole)) {
+    throw new Error("Configure exactly one of OIDC_REQUIRED_SCOPE or OIDC_REQUIRED_ROLE");
+  }
+  if (requiredRole && requiredRole !== "authenticated") {
+    throw new Error("OIDC_REQUIRED_ROLE only supports authenticated user JWTs");
+  }
 
   const databaseUrl = new URL(env.DATABASE_URL);
   if (!["postgres:", "postgresql:"].includes(databaseUrl.protocol)) {
@@ -39,7 +48,8 @@ export function loadConfig(env = process.env) {
     oidcIssuer: issuer.origin === env.OIDC_ISSUER ? issuer.href.replace(/\/$/, "") : env.OIDC_ISSUER.replace(/\/$/, ""),
     oidcAudience: env.OIDC_AUDIENCE,
     oidcJwksUrl: jwks.href,
-    oidcRequiredScope: env.OIDC_REQUIRED_SCOPE,
+    oidcRequiredScope: requiredScope,
+    oidcRequiredRole: requiredRole,
     corsOrigins: new Set(corsOrigins),
     trustProxy: env.TRUST_PROXY === "true"
   });
