@@ -32,6 +32,14 @@ The queue is currently not consumed by a deployed worker. A `QUEUED` job does no
 
 ## Apply and test
 
-Apply migrations `0001_initial.sql` through `0008_restrict_api_sequences.sql` in numeric order using a migration-owner account after provisioning both roles. Never run migrations with the runtime role.
+Apply migration `0000_supabase_roles.sql` first when the roles do not exist, then `0001_initial.sql` through `0009_private_tenant.sql` in numeric order using a migration-owner account. Database passwords must be provisioned separately in a secret manager. Never run migrations with the runtime role.
 
 CI applies all migrations to an ephemeral PostgreSQL 16 instance and tests tenant isolation, user-scoped membership/project/ticket/job visibility, worker-only queue access, append-only audit/usage records, and authenticated API behavior.
+
+## Supabase staging status (2026-11-20)
+
+The former shareholders project's **application tables** were removed and CORNOD migrations `0000` through `0009` have been successfully applied to Supabase project `ovzjhaykcrtvyoxneydc` (US West). It is a CORNOD staging database, not a public production service. Its two legacy Auth identities remain unassigned to a CORNOD tenant until ownership is independently verified. The private tenant `cornod-private` and quotas exist; no executable VM template, running worker, login gateway, backend host or active workspace exists.
+
+Do not expose this project through the Supabase Data API. None of the CORNOD tables currently grant `anon` or `authenticated` direct data access. `public.resource_profiles` is not RLS-enabled; do not grant access to browser roles. Before any such access is contemplated, design and review its read policies and enable RLS. All other new public tables have RLS enabled. The security advisor also reports leaked-password protection disabled; turn it on in Auth settings before enabling password sign-in.
+
+The server accepts a Supabase Auth access token only after asymmetric JWT signature, issuer, audience and `role=authenticated` are validated. The server must connect with `cornod_app` and authenticate tenant membership inside the database. Supabase's publishable key is **not** a backend database credential. No secret keys belong in the static site.
