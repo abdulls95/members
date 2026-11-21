@@ -67,7 +67,7 @@ The API socket is a Unix-domain socket inside the Jailer chroot. It is never bou
 ## Network policy
 
 - Every VM receives a dedicated network namespace and tap device.
-- Egress is deny-by-default and mediated by a host policy gateway. No unrestricted bridge to the host LAN.
+- Egress is deny-by-default and mediated by a host policy gateway. The current `server/runtime/egress-policy.js` helper rejects private, local, reserved and non-global-unicast DNS answers; it is not enforcement by itself. No unrestricted bridge to the host LAN.
 - Block loopback-to-host tricks, RFC1918/link-local destinations, cloud metadata endpoints, control-plane networks and IPv6 equivalents unless explicitly allowed by a reviewed policy.
 - DNS is mediated; redirects and DNS rebinding must be checked at connection time, not only at initial resolution.
 - No inbound public port is opened for a workspace. Terminal access is through a separately authenticated gateway and the guest agent over vsock.
@@ -96,7 +96,7 @@ Every create operation must be idempotent by workspace ID. A retry must discover
 - [x] Tests for request order, invalid inputs, symlink rejection and VMM API failures.
 - [x] Host preflight script (read-only).
 - [ ] Host supervisor and Jailer lifecycle management.
-- [ ] Network namespace/tap allocator and default-deny egress gateway.
+- [x] Public-destination validation library for resolved A/AAAA answers (policy helper only; not a gateway or firewall).\n- [ ] Network namespace/tap allocator and default-deny egress gateway.
 - [ ] Encrypted workspace volume allocator and cleanup verification.
 - [x] Bounded guest-agent message validator and typed Sherlock request builder (protocol library only; no guest daemon or transport authentication yet).\n- [ ] Guest init/agent daemon, authenticated vsock transport and terminal gateway.
 - [ ] End-to-end Firecracker host test on a KVM-capable staging node.
