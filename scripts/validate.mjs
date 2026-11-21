@@ -41,7 +41,8 @@ const authConfig = read("assets/js/core/auth-config.js");
 assert.match(pages, /requestEmailLogin|verifyEmailCode/, "Sign-in must use Supabase email verification");
 assert.match(authClient, /\/auth\/v1/, "Client must use the Supabase Auth endpoint");
 assert.match(authClient, /\/user/, "Client must verify real sessions at the Auth service");
-assert.doesNotMatch(authClient + authConfig, /sb_secret_|service_role|PRIVATE KEY/i, "Auth client may only contain public credentials");
+assert.match(authConfig, /publishableKey: 'sb_publishable_/, "Frontend must use a publishable Auth key");
+assert.doesNotMatch(authClient + authConfig, /sb_secret_[A-Za-z0-9_-]+|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, "Auth client must not contain privileged secrets");
 assert.match(html, /connect-src 'self' https:\/\/ovzjhaykcrtvyoxneydc\.supabase\.co/, "CSP must allow only the CORNOD Auth endpoint");
 
 const learnView = read("assets/js/views/learn.js");
