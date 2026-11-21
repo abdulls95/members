@@ -37,3 +37,6 @@ The API integration workflow uses a separate worker database login to test claim
 ## Current limitation
 
 The queue lease engine is a reusable library, not a deployed background process. No job is automatically consumed outside the test suite, and a `QUEUED` workspace request does not represent a running machine.
+
+
+The current Firecracker API client configures the VM over a per-workspace Unix socket after a trusted host supervisor has staged the jail. It does not launch Jailer or provide a terminal by itself. See `docs/FIRECRACKER-RUNTIME.md` for the selected v1.18.0 host boundary and release gates.

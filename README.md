@@ -22,13 +22,14 @@ The site is a static frontend preview only. It is not a private workspace or a p
 - Bilingual curated tool catalogue with risk labels, including Sherlock, Nmap, sqlmap and developer tools (catalogue preview only).
 - Executable PostgreSQL migrations for tenant isolation, restricted API/worker roles, short-lived ticket scoping, worker-only queue claims and append-only audit/usage permissions.
 - CI-backed PostgreSQL isolation, worker-claim, signed-token API and container smoke tests against ephemeral services.
+- Tested Firecracker API adapter over per-VM Unix sockets, with a read-only host preflight script for KVM/cgroup/Jailer requirements.
 - Architecture, threat model and release-blocking security checklist.
 
 ## Not implemented
 
 - No identity provider, browser login/BFF, MFA enrollment or live tenant accounts have been configured. The API verifies externally issued OIDC bearer tokens when configured.
 - No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
-- No deployed background worker, Linux runtime, isolated workspaces or executable terminal. The tested queue lease engine does not launch workloads. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job.
+- No deployed background worker, Firecracker host supervisor, Linux runtime, isolated workspaces or executable terminal. A tested Firecracker Unix-socket API adapter and queue lease engine exist, but neither launches workloads by itself. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job.
 - Tool installation and command execution remain disabled until the isolated runtime and authorization controls are deployed.
 - No billing, metering service or production audit pipeline.
 
@@ -50,6 +51,7 @@ The interface deliberately does not simulate successful backend operations.
 - [OpenAPI v1](openapi/cornod-v1.yaml)
 - [Authorization matrix](docs/AUTHORIZATION-MATRIX.md)
 - [Logical data model](docs/DATA-MODEL.md)
+- [Firecracker runtime design](docs/FIRECRACKER-RUNTIME.md)
 - [Database migrations and security model](db/README.md)
 - [API service implementation and deployment boundary](docs/API-SERVICE.md)
 - [Security acceptance gates](docs/SECURITY-ACCEPTANCE.md)\n- [Security reporting policy](SECURITY.md)
