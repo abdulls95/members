@@ -197,3 +197,17 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
 :lang(ar) .eyebrow, :lang(ar) .tag { font-family: var(--font); }
 @media (max-width: 480px) { .brand small { display: none; } }
 \n\n/* Strict-CSP layout utilities. */\n.mt-8{margin-block-start:8px!important}.mt-10{margin-block-start:10px!important}.mt-12{margin-block-start:12px!important}.mt-14{margin-block-start:14px!important}.mt-40{margin-block-start:40px!important}.flex-1{flex:1}.minw-200{min-width:200px}.w-full{width:100%}.block{display:block}.flush{margin:0!important}.danger{border-color:rgba(255,77,79,.4)!important;border-inline-start-color:var(--bad)!important;background:rgba(255,77,79,.05)!important}.signin-card{max-width:420px;margin:40px auto}.text-ok{color:var(--ok)}\n
+/* CORNOD Academy: responsive, keyboard-accessible practice layout */
+.learn-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-block-end: 18px; flex-wrap: wrap; }
+.learn-summary h2 { margin-block: 6px; }
+.learn-score { min-width: 90px; font: 800 2rem/1 var(--mono); color: var(--orange); direction: ltr; }
+.learn-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, .8fr); gap: 16px; align-items: start; }
+.learn-terminal { min-height: 420px; height: min(65vh, 620px); }
+.learn-terminal .term-in { gap: 8px; }
+.learn-terminal .term-in button { flex: none; }
+.learn-lesson { padding: 12px 14px; }
+.learn-lesson h3 { margin: 4px 0; }
+.learn-lesson p { margin-block-end: 6px; }
+.learn-lesson.learn-done { border-inline-start: 3px solid var(--ok); }
+.learn-hint { display: inline-block; direction: ltr; color: var(--orange-2); unicode-bidi: isolate; }
+@media (max-width: 960px) { .learn-layout { grid-template-columns: minmax(0,1fr); } .learn-terminal { min-height: 350px; height: 52vh; } }
