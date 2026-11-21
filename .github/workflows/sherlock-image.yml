@@ -1,0 +1,28 @@
+name: CORNOD Sherlock tool image
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "infra/tools/sherlock/**"
+      - ".github/workflows/sherlock-image.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "infra/tools/sherlock/**"
+      - ".github/workflows/sherlock-image.yml"
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Build pinned Sherlock tool payload
+        run: docker build --pull --tag cornod-sherlock:ci infra/tools/sherlock
+      - name: Verify non-root runtime user
+        run: test "$(docker image inspect --format='{{.Config.User}}' cornod-sherlock:ci)" = "10001:10001"
+      - name: Verify pinned Sherlock version without network access
+        run: docker run --rm --network none --entrypoint sherlock cornod-sherlock:ci --version
+      - name: Verify bounded wrapper interface without network access
+        run: docker run --rm --network none cornod-sherlock:ci --help

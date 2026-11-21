@@ -23,3 +23,11 @@ jobs:
         run: node --test tests/unit/*.test.mjs
       - name: Validate frontend, navigation and security guardrails
         run: node scripts/validate.mjs
+      - name: Build pinned Sherlock tool payload
+        run: docker build --pull --tag cornod-sherlock:ci infra/tools/sherlock
+      - name: Verify Sherlock payload runs unprivileged
+        run: test "$(docker image inspect --format='{{.Config.User}}' cornod-sherlock:ci)" = "10001:10001"
+      - name: Smoke-test Sherlock payload offline
+        run: |
+          docker run --rm --network none --entrypoint sherlock cornod-sherlock:ci --version
+          docker run --rm --network none cornod-sherlock:ci --help
