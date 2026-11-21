@@ -47,7 +47,7 @@ export const terminal = {
 
     print('CORNOD terminal client v0.1', 'sys');
     print(getLang() === 'ar' ? 'اكتب ‎:help‎ لعرض الأوامر المحلية.' : 'Type :help for local commands.', 'dim');
-    if (!backendConfigured()) adapter.connect(); // reports NO_BACKEND honestly
+    adapter.connect(); // Connect when configured; otherwise show the honest NO_BACKEND message.
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { ctl.submit(input.value); input.value = ''; }
