@@ -5,6 +5,7 @@ import { TOOLS, TOOL_CATS, COMMANDS, CMD_CATS, LABS, OSINT, FEATURES } from '../
 import { can } from '../core/rbac.js';
 import * as store from '../core/store.js';
 import { setLang } from '../core/i18n.js';
+import { requestEmailLogin, verifyEmailCode, getSignedInUser, signOut } from '../core/auth-client.js';
 
 // ---------- Overview ----------
 export const home = {
@@ -150,18 +151,86 @@ export const settings = {
   },
 };
 
-// ---------- Sign in ----------
+// ---------- Real Supabase Auth (email magic link or numeric email code) ----------
 export const signin = {
-  render: () => html`<div class="card accent signin-card">
-    <h1>${t('auth.title')}</h1><div class="notice"><span>${t('auth.unavailable')}</span></div>
-    <form id="signin-form"><label class="meta">${t('auth.email')}</label><input class="input w-full" type="email" disabled autocomplete="email">
-    <label class="meta block mt-10">${t('auth.password')}</label><input class="input w-full" type="password" disabled autocomplete="current-password">
-    <button class="btn primary w-full mt-14" disabled aria-disabled="true">${t('auth.title')}</button></form></div>`,
-  mount: (root) => {
-    const f = root.querySelector('#signin-form');
-    const stop = (e) => e.preventDefault(); // no auth backend: never submit anywhere
-    f.addEventListener('submit', stop);
-    return () => f.removeEventListener('submit', stop);
+  render: () => {
+    const user = getSignedInUser();
+    if (user) return html`<div class="card accent signin-card">
+      <div class="eyebrow">CORNOD / ACCOUNT</div>
+      <h1>${t('auth.signedIn')}</h1>
+      <p class="auth-email">${user.email}</p>
+      <div class="notice" role="note"><strong>${t('auth.ownerNoteTitle')}</strong><span>${t('auth.ownerNote')}</span></div>
+      <button class="btn primary w-full" type="button" id="signout-btn">${t('auth.signout')}</button>
+    </div>`;
+    return html`<div class="card accent signin-card">
+      <div class="eyebrow">CORNOD / ACCESS</div>
+      <h1>${t('auth.title')}</h1>
+      <p>${t('auth.emailIntro')}</p>
+      <form id="signin-form" novalidate>
+        <label class="meta block" for="signin-email">${t('auth.email')}</label>
+        <input id="signin-email" class="input w-full" type="email" required autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
+        <button class="btn primary w-full mt-14" id="signin-submit" type="submit">${t('auth.send')}</button>
+      </form>
+      <form id="verify-form" hidden class="auth-code mt-14" novalidate>
+        <p>${t('auth.sent')}</p>
+        <label class="meta block" for="signin-code">${t('auth.code')}</label>
+        <input id="signin-code" class="input w-full" type="text" pattern="[0-9]{6,8}" maxlength="8" inputmode="numeric" autocomplete="one-time-code" spellcheck="false">
+        <button class="btn primary w-full mt-14" type="submit">${t('auth.verify')}</button>
+      </form>
+      <p class="meta mt-14" id="signin-message" role="status" aria-live="polite"></p>
+      <p class="meta">${t('auth.linkHint')}</p>
+      <div class="notice" role="note"><span>${t('auth.noOwner')}</span></div>
+    </div>`;
+  },
+  mount: (root, { rerender }) => {
+    const logout = root.querySelector('#signout-btn');
+    if (logout) {
+      const onLogout = async () => { logout.disabled = true; await signOut(); rerender(); };
+      logout.addEventListener('click', onLogout);
+      return () => logout.removeEventListener('click', onLogout);
+    }
+    const form = root.querySelector('#signin-form');
+    const verify = root.querySelector('#verify-form');
+    const emailInput = root.querySelector('#signin-email');
+    const codeInput = root.querySelector('#signin-code');
+    const message = root.querySelector('#signin-message');
+    let pendingEmail = '';
+    let busy = false;
+    let live = true;
+    function showError(error) {
+      if (!live) return;
+      message.textContent = error?.status === 429 ? t('auth.rateLimited') : t('auth.error');
+    }
+    async function onSend(e) {
+      e.preventDefault();
+      if (busy) return;
+      busy = true; form.querySelector('button').disabled = true;
+      message.textContent = t('auth.sending');
+      try {
+        const email = await requestEmailLogin(emailInput.value);
+        if (!live) return;
+        pendingEmail = email;
+        verify.hidden = false;
+        emailInput.readOnly = true;
+        message.textContent = t('auth.sent');
+        codeInput.focus();
+      } catch (error) { showError(error); }
+      finally { busy = false; if (live) form.querySelector('button').disabled = false; }
+    }
+    async function onVerify(e) {
+      e.preventDefault();
+      if (busy || !pendingEmail) return;
+      busy = true; verify.querySelector('button').disabled = true;
+      message.textContent = t('auth.checking');
+      try {
+        await verifyEmailCode(pendingEmail, codeInput.value);
+        if (live) rerender();
+      } catch (error) { showError(error); }
+      finally { busy = false; if (live && verify.isConnected) verify.querySelector('button').disabled = false; }
+    }
+    form.addEventListener('submit', onSend);
+    verify.addEventListener('submit', onVerify);
+    return () => { live = false; form.removeEventListener('submit', onSend); verify.removeEventListener('submit', onVerify); };
   },
 };
 
