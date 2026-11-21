@@ -5,7 +5,7 @@ import { icon, LOGO } from './core/icons.js';
 import { esc } from './core/ui.js';
 import * as P from './views/pages.js';
 import { learn } from './views/learn.js';
-import { consumeEmailRedirect, onAuthChange } from './core/auth-client.js';
+import { consumeEmailRedirect, onAuthChange, isSignedIn } from './core/auth-client.js';
 
 // Route table. `perm` = permission needed to view (UI gating only; the API enforces for real).
 export const ROUTES = [
@@ -40,6 +40,7 @@ function renderChrome() {
     ${ROUTES.filter((r) => r.group === g).map((r) =>
     `<a href="#${r.path}" data-path="${r.path}">${icon(r.icon)}<span>${esc(t('nav.' + r.key))}</span></a>`).join('')}</div>`).join('');
   $('#lang-btn').textContent = t('lang.switch');
+  $('#auth-link').textContent = isSignedIn() ? t('auth.account') : t('auth.title');
   $('#backend-pill').lastChild.textContent = t('status.backend');
   $('#brand-sub').textContent = t('app.slogan');
   $('#menu-btn').setAttribute('aria-label', t('nav.menu'));
