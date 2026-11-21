@@ -22,7 +22,14 @@ export function createTokenVerifier(config) {
     const scopes = typeof payload.scope === "string"
       ? payload.scope.split(/\s+/)
       : Array.isArray(payload.scp) ? payload.scp : [];
-    if (!scopes.includes(config.oidcRequiredScope)) {
+    if (config.oidcRequiredRole) {
+      // Supabase Auth access JWTs use role=authenticated and aud=authenticated.
+      // Never treat an anon/service_role token as a user. Tenant authorization
+      // remains server-owned and is checked against database membership.
+      if (payload.role !== config.oidcRequiredRole) {
+        throw new Error("Authenticated user role is required");
+      }
+    } else if (!scopes.includes(config.oidcRequiredScope)) {
       throw new Error("Required API scope is missing");
     }
 
