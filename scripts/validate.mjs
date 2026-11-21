@@ -36,6 +36,14 @@ for (const route of ["/dashboard", "/workspaces", "/terminal", "/learn", "/files
 assert.match(app, /Escape/, "Escape must close mobile navigation");
 assert.match(app, /UI gating only; the API enforces for real/, "Client-side role gating must not be represented as security");
 
+const authClient = read("assets/js/core/auth-client.js");
+const authConfig = read("assets/js/core/auth-config.js");
+assert.match(pages, /requestEmailLogin|verifyEmailCode/, "Sign-in must use Supabase email verification");
+assert.match(authClient, /\/auth\/v1/, "Client must use the Supabase Auth endpoint");
+assert.match(authClient, /\/user/, "Client must verify real sessions at the Auth service");
+assert.doesNotMatch(authClient + authConfig, /sb_secret_|service_role|PRIVATE KEY/i, "Auth client may only contain public credentials");
+assert.match(html, /connect-src 'self' https:\/\/ovzjhaykcrtvyoxneydc\.supabase\.co/, "CSP must allow only the CORNOD Auth endpoint");
+
 const learnView = read("assets/js/views/learn.js");
 const practice = read("assets/js/learn/practice.js");
 assert.match(learnView, /Learning|learn\.notice/);
