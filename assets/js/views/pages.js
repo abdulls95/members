@@ -2,7 +2,7 @@ import { t, L, getLang } from '../core/i18n.js';
 import { html, raw, esc, pageHead, previewNotice, statusTag } from '../core/ui.js';
 import { icon } from '../core/icons.js';
 import { TOOLS, TOOL_CATS, COMMANDS, CMD_CATS, LABS, OSINT, FEATURES } from '../data/catalog.js';
-import { ROLES, PERMISSIONS, permsOf, can } from '../core/rbac.js';
+import { can } from '../core/rbac.js';
 import * as store from '../core/store.js';
 import { setLang } from '../core/i18n.js';
 
@@ -128,33 +128,25 @@ export const ai = {
       <button class="btn primary" disabled aria-disabled="true">${t('ai.send')}</button></div></div>`,
 };
 
-// ---------- Admin (role-gated) ----------
+// ---------- Administration is intentionally locked until verified server-side auth ----------
+// No admin preview, fake owner controls or permission-management forms ship in the public UI.
 export const admin = {
-  perm: 'admin:users',
-  render: () => html`${raw(pageHead('admin.title', 'admin.sub', 'preview'))}${previewNotice()}
-    <h2>${t('admin.roles')}</h2>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('common.permissions')}</th>
-      ${Object.keys(ROLES).map((r) => raw(html`<th class="mono">${r}</th>`))}</tr></thead><tbody>
-      ${PERMISSIONS.map((p) => raw(html`<tr><td class="mono ltr">${p}</td>${Object.keys(ROLES).map((r) =>
-        raw(`<td>${permsOf(r).has(p) ? '<span class="text-ok">●</span>' : '<span class="muted">·</span>'}</td>`))}</tr>`))}
-    </tbody></table></div>
-    <div class="grid g3 mt-14">
-      ${['users', 'audit', 'health'].map((k) => raw(html`<div class="card"><h3>${t('admin.' + k)}</h3><div class="empty">${t('dash.noData')}</div></div>`))}
-    </div>`,
+  render: () => html`<div class="empty mt-40">${t('admin.locked')}</div>`,
 };
 
-// ---------- Settings ----------
+// ---------- Public personal settings (language only; no authorization knobs) ----------
 export const settings = {
-  render: ({ role }) => html`${raw(pageHead('set.title', 'set.sub', 'live'))}
+  render: () => html`${raw(pageHead('set.title', 'set.sub', 'live'))}
     <div class="grid g2">
       <div class="card"><h3>${raw(icon('globe'))}${t('set.lang')}</h3>
         <select class="input w-full" id="set-lang"><option value="ar"${raw(getLang() === 'ar' ? ' selected' : '')}>العربية</option><option value="en"${raw(getLang() === 'en' ? ' selected' : '')}>English</option></select></div>
-      <div class="card"><h3>${t('set.preview')}</h3><p class="meta">${t('set.previewHelp')}</p>
-        <select class="input w-full" id="set-role">${Object.keys(ROLES).map((r) => raw(`<option value="${r}"${r === role ? ' selected' : ''}>${r}</option>`))}</select></div>
+      <div class="card"><h3>${t('set.owner')}</h3><p>${t('set.ownerLocked')}</p></div>
     </div>`,
-  mount: (root, { rerender }) => {
-    root.querySelector('#set-lang').addEventListener('change', (e) => { store.set('lang', e.target.value); setLang(e.target.value); });
-    root.querySelector('#set-role').addEventListener('change', (e) => { store.set('previewRole', e.target.value); rerender(); });
+  mount: (root) => {
+    root.querySelector('#set-lang').addEventListener('change', (e) => {
+      store.set('lang', e.target.value);
+      setLang(e.target.value);
+    });
   },
 };
 
@@ -180,5 +172,5 @@ export const status = {
     <tbody>${FEATURES.map(([id, s, name, note]) => raw(html`<tr data-feature="${id}"><td>${L(name)}</td><td>${statusTag(s)}</td><td class="muted">${L(note)}</td></tr>`))}</tbody></table></div>`,
 };
 
-export const denied = { render: () => html`<div class="empty mt-40">${t('admin.denied')}</div>` };
+export const denied = { render: () => html`<div class="empty mt-40">${t('admin.locked')}</div>` };
 export const notFound = { render: () => html`<div class="empty mt-40"><h2>404 — ${t('common.notFound')}</h2><a href="#/">${t('common.back')}</a></div>` };
