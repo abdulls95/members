@@ -8,6 +8,7 @@ on:
       - "package.json"
       - ".github/workflows/api-quality.yml"
       - "Dockerfile"
+      - "deploy/**"
   pull_request:
     branches: ["main"]
     paths:
@@ -16,6 +17,7 @@ on:
       - "package.json"
       - ".github/workflows/api-quality.yml"
       - "Dockerfile"
+      - "deploy/**"
 permissions:
   contents: read
 jobs:
@@ -78,6 +80,11 @@ jobs:
           name: cornod-api-sbom
           path: sbom.cdx.json
           retention-days: 30
+      - name: Validate private staging Compose configuration
+        run: |
+          cp deploy/.env.staging.example deploy/.env.staging
+          docker compose -f deploy/compose.staging.yml config --quiet
+          rm deploy/.env.staging
       - name: Build API container image
         run: docker build --pull --tag cornod-api:ci .
       - name: Verify container runs as non-root
