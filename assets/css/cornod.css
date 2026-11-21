@@ -211,3 +211,10 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .learn-lesson.learn-done { border-inline-start: 3px solid var(--ok); }
 .learn-hint { display: inline-block; direction: ltr; color: var(--orange-2); unicode-bidi: isolate; }
 @media (max-width: 960px) { .learn-layout { grid-template-columns: minmax(0,1fr); } .learn-terminal { min-height: 350px; height: 52vh; } }
+
+/* Real email sign-in: never display a hidden code form until email request succeeds. */
+.auth-code[hidden] { display: none !important; }
+.signin-card label { margin-block-start: 10px; }
+.signin-card .auth-email { direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere; }
+.signin-card button:disabled { opacity: .6; }
+.signin-card #signin-message { min-height: 1.6em; }
