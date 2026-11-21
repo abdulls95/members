@@ -5,6 +5,7 @@ import { icon, LOGO } from './core/icons.js';
 import { esc } from './core/ui.js';
 import * as P from './views/pages.js';
 import { learn } from './views/learn.js';
+import { consumeEmailRedirect, onAuthChange } from './core/auth-client.js';
 
 // Route table. `perm` = permission needed to view (UI gating only; the API enforces for real).
 export const ROUTES = [
@@ -78,10 +79,17 @@ export function boot() {
   $('#menu-btn').addEventListener('click', () => $('.shell').classList.toggle('nav-open'));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('.shell').classList.remove('nav-open'); });
   onLangChange(() => { renderChrome(); renderView(); });
+  onAuthChange(() => { if (current.ctx) { renderChrome(); renderView(); } });
 
+  // Consume one-time Supabase magic-link tokens before the hash router sees them.
+  // The client removes the bearer token from the URL immediately.
+  const callback = consumeEmailRedirect().catch(() => {
+    // A failed callback never grants access; the visitor can request another email.
+  });
   const router = createRouter(ROUTES, (route, ctx) => { current = { route, ctx }; renderView(); });
   renderChrome();
   router.resolve();
+  callback.then(() => { if (current.ctx) renderView(); });
 }
 
 boot();
