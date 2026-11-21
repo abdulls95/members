@@ -177,7 +177,7 @@ export const signin = {
       </div>
       <form id="password-form">
         <label class="meta block" for="signin-email">${t('auth.email')}</label>
-        <input id="signin-email" class="input w-full" type="email" value="a.alyf3i@gmail.com" required autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
+        <input id="signin-email" class="input w-full" type="email" required autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
         <label class="meta block mt-10" for="signin-password">${t('auth.password')}</label>
         <input id="signin-password" class="input w-full" type="password" required minlength="12" maxlength="128" autocomplete="current-password">
         <p class="meta mt-8" id="password-help" hidden>${t('auth.passwordRules')}</p>
