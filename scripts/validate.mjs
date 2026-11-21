@@ -48,7 +48,10 @@ assert.match(terminalController, /NOT_CONNECTED/, "Terminal must explicitly say 
 assert.match(config, /apiBase: null/);
 assert.match(config, /wsBase: null/);
 
-assert.match(store, /lang: 'ar', previewRole: 'guest'/, "Only non-sensitive preview preferences may persist");
+assert.match(store, /lang: 'ar'/, "Language preference must remain available");
+assert.doesNotMatch(store, /previewRole|admin:users/, "Browser must not persist user-selected roles");
+assert.doesNotMatch(pages, /id="set-role"/, "Public settings must not offer role escalation");
+assert.match(app, /group: 'owner-locked'/, "Owner administration must be absent from public navigation");
 assert.doesNotMatch(pages, /\sstyle\s*=/i, "UI templates must not use inline style attributes");
 assert.doesNotMatch(pages, /<[^>]*\son[a-z]+\s*=/i, "UI templates must not use inline event handlers");
 assert.match(catalog, /Sherlock/i, "Curated tool catalogue should include Sherlock");
