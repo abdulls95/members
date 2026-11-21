@@ -1,4 +1,4 @@
-// CORNOD passwordless Auth client. A real Supabase Auth session, never an owner role.
+// CORNOD email + password / passwordless Auth client. A real Supabase Auth session, never an owner role.
 // Tokens stay only in memory: a page reload requires a new email sign-in.
 // Public publishable keys are OK in client code. Privileged keys are forbidden.
 import { AUTH } from './auth-config.js';
@@ -36,6 +36,46 @@ async function request(path, options = {}, fetchImpl = fetch) {
   }
   return body;
 }
+
+export function validatePassword(password) {
+  return typeof password === 'string' && password.length >= 12 && password.length <= 128;
+}
+export async function signUpWithPassword(email, password, fetchImpl = fetch) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!validateEmail(normalized)) throw new Error('INVALID_EMAIL');
+  if (!validatePassword(password)) throw new Error('WEAK_PASSWORD');
+  const data = await request('/signup?redirect_to=' + encodeURIComponent(AUTH.redirectUrl), {
+    method: 'POST', body: JSON.stringify({ email: normalized, password })
+  }, fetchImpl);
+  // Signup normally requires email verification and returns no session.
+  if (data?.access_token) await acceptSession(data, fetchImpl);
+  return { needsConfirmation: !data?.access_token };
+}
+export async function signInWithPassword(email, password, fetchImpl = fetch) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!validateEmail(normalized) || typeof password !== 'string' || !password) throw new Error('INVALID_CREDENTIALS');
+  const data = await request('/token?grant_type=password', {
+    method: 'POST', body: JSON.stringify({ email: normalized, password })
+  }, fetchImpl);
+  return acceptSession(data, fetchImpl);
+}
+export async function requestPasswordReset(email, fetchImpl = fetch) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!validateEmail(normalized)) throw new Error('INVALID_EMAIL');
+  await request('/recover?redirect_to=' + encodeURIComponent(AUTH.redirectUrl), {
+    method: 'POST', body: JSON.stringify({ email: normalized })
+  }, fetchImpl);
+}
+export async function updatePassword(password, fetchImpl = fetch) {
+  if (!validatePassword(password)) throw new Error('WEAK_PASSWORD');
+  if (!session?.token) throw new Error('NOT_SIGNED_IN');
+  await request('/user', {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + session.token },
+    body: JSON.stringify({ password })
+  }, fetchImpl);
+}
+
 export async function requestEmailLogin(email, fetchImpl = fetch) {
   const normalized = String(email).trim().toLowerCase();
   if (!validateEmail(normalized)) throw new Error('INVALID_EMAIL');
