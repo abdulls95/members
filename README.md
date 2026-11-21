@@ -27,8 +27,8 @@ The site is a static frontend preview only. It is not a private workspace or a p
 
 ## Not implemented
 
-- No identity provider, browser login/BFF, MFA enrollment or live tenant accounts have been configured. The API verifies externally issued OIDC bearer tokens when configured.
-- No managed database has been provisioned or connected to a live service. The repository contains reviewed migrations and CI-tested PostgreSQL isolation policies.
+- Supabase Auth exists in the CORNOD staging project, but existing Auth identities have not been granted CORNOD tenant membership, and browser login/BFF/MFA are not deployed. The API can verify asymmetric Supabase Auth JWTs when configured.
+- A Supabase PostgreSQL staging database has been provisioned with CORNOD tables, roles and the private tenant; it is not yet connected to a deployed backend service. CI also tests its migration files against ephemeral PostgreSQL.
 - No deployed background worker, Firecracker host supervisor, Linux runtime, isolated workspaces or executable terminal. A tested Firecracker Unix-socket API adapter and queue lease engine exist, but neither launches workloads by itself. Workspace creation only records a `REQUESTED` workspace and `QUEUED` job.
 - Tool installation and command execution remain disabled until the isolated runtime and authorization controls are deployed.
 - No billing, metering service or production audit pipeline.
@@ -47,7 +47,7 @@ The interface deliberately does not simulate successful backend operations.
 
 A hardened Docker Compose definition for the control-plane API is included in [deploy/](deploy/README.md), along with a non-secret environment template and CI syntax validation. This package is **not deployed**, and it deliberately has no worker, public sign-in, terminal execution, or microVM host. The frontend continues to show an unavailable backend until an authenticated API and isolated runtime are actually deployed and verified.
 
-The legacy shareholders Supabase project has unrelated tables and existing security-advisor findings. CORNOD must use a dedicated database or a reviewed isolation/migration plan; do not attach it to the legacy project as-is.
+The legacy shareholders app tables were removed and CORNOD migrations deployed into that Supabase project. The remaining legacy Auth identities have NOT been granted CORNOD membership. See db/README.md for the staging status and security blockers.
 
 ## Engineering documents
 
