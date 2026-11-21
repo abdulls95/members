@@ -5,7 +5,7 @@ import { TOOLS, TOOL_CATS, COMMANDS, CMD_CATS, LABS, OSINT, FEATURES } from '../
 import { can } from '../core/rbac.js';
 import * as store from '../core/store.js';
 import { setLang } from '../core/i18n.js';
-import { requestEmailLogin, verifyEmailCode, getSignedInUser, signOut } from '../core/auth-client.js';
+import { requestEmailLogin, verifyEmailCode, getSignedInUser, signOut, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from '../core/auth-client.js';
 
 // ---------- Overview ----------
 export const home = {
@@ -151,86 +151,168 @@ export const settings = {
   },
 };
 
-// ---------- Real Supabase Auth (email magic link or numeric email code) ----------
+// ---------- Real Supabase Auth: password sign-in, signup, password reset, optional email code ----------
 export const signin = {
   render: () => {
     const user = getSignedInUser();
     if (user) return html`<div class="card accent signin-card">
       <div class="eyebrow">CORNOD / ACCOUNT</div>
-      <h1>${t('auth.signedIn')}</h1>
-      <p class="auth-email">${user.email}</p>
+      <h1>${t('auth.signedIn')}</h1><p class="auth-email">${user.email}</p>
+      <form id="password-change-form">
+        <label class="meta block" for="auth-new-password">${t('auth.newPassword')}</label>
+        <input class="input w-full" id="auth-new-password" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
+        <button class="btn w-full mt-12" type="submit">${t('auth.changePassword')}</button>
+      </form>
+      <p id="auth-message" role="status" aria-live="polite" class="meta mt-12"></p>
       <div class="notice" role="note"><strong>${t('auth.ownerNoteTitle')}</strong><span>${t('auth.ownerNote')}</span></div>
       <button class="btn primary w-full" type="button" id="signout-btn">${t('auth.signout')}</button>
     </div>`;
     return html`<div class="card accent signin-card">
       <div class="eyebrow">CORNOD / ACCESS</div>
       <h1>${t('auth.title')}</h1>
-      <p>${t('auth.emailIntro')}</p>
-      <form id="signin-form" novalidate>
+      <p>${t('auth.passwordIntro')}</p>
+      <div class="toolbar" role="group" aria-label="${t('auth.mode')}">
+        <button class="btn primary sm" id="mode-login" type="button" aria-pressed="true">${t('auth.login')}</button>
+        <button class="btn sm" id="mode-signup" type="button" aria-pressed="false">${t('auth.signup')}</button>
+      </div>
+      <form id="password-form">
         <label class="meta block" for="signin-email">${t('auth.email')}</label>
-        <input id="signin-email" class="input w-full" type="email" required autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
-        <button class="btn primary w-full mt-14" id="signin-submit" type="submit">${t('auth.send')}</button>
+        <input id="signin-email" class="input w-full" type="email" value="a.alyf3i@gmail.com" required autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
+        <label class="meta block mt-10" for="signin-password">${t('auth.password')}</label>
+        <input id="signin-password" class="input w-full" type="password" required minlength="12" maxlength="128" autocomplete="current-password">
+        <p class="meta mt-8" id="password-help" hidden>${t('auth.passwordRules')}</p>
+        <button class="btn primary w-full mt-14" id="password-submit" type="submit">${t('auth.login')}</button>
       </form>
-      <form id="verify-form" hidden class="auth-code mt-14" novalidate>
-        <p>${t('auth.sent')}</p>
-        <label class="meta block" for="signin-code">${t('auth.code')}</label>
-        <input id="signin-code" class="input w-full" type="text" pattern="[0-9]{6,8}" maxlength="8" inputmode="numeric" autocomplete="one-time-code" spellcheck="false">
-        <button class="btn primary w-full mt-14" type="submit">${t('auth.verify')}</button>
-      </form>
+      <button id="auth-forgot" class="btn ghost sm mt-12" type="button">${t('auth.forgot')}</button>
+      <details class="mt-14" id="email-link-details">
+        <summary>${t('auth.emailAlternative')}</summary>
+        <form id="signin-form" class="mt-12" novalidate>
+          <button class="btn w-full" type="submit">${t('auth.send')}</button>
+        </form>
+        <form id="verify-form" hidden class="auth-code mt-14" novalidate>
+          <label class="meta block" for="signin-code">${t('auth.code')}</label>
+          <input id="signin-code" class="input w-full" type="text" pattern="[0-9]{6,8}" maxlength="8" inputmode="numeric" autocomplete="one-time-code" spellcheck="false">
+          <button class="btn w-full mt-12" type="submit">${t('auth.verify')}</button>
+        </form>
+        <p class="meta mt-8">${t('auth.linkHint')}</p>
+      </details>
       <p class="meta mt-14" id="signin-message" role="status" aria-live="polite"></p>
-      <p class="meta">${t('auth.linkHint')}</p>
       <div class="notice" role="note"><span>${t('auth.noOwner')}</span></div>
     </div>`;
   },
   mount: (root, { rerender }) => {
+    let live = true;
+    let busy = false;
+    const message = root.querySelector('#signin-message') || root.querySelector('#auth-message');
+    const status = (value) => { if (live) message.textContent = value; };
+    const errorMessage = (error) => {
+      if (error?.message === 'WEAK_PASSWORD') return t('auth.passwordRules');
+      if (error?.status === 429) return t('auth.rateLimited');
+      return t('auth.error');
+    };
+    const wrap = async (button, action) => {
+      if (busy) return;
+      busy = true; if (button) button.disabled = true;
+      try { await action(); } catch (error) { status(errorMessage(error)); }
+      finally { busy = false; if (live && button?.isConnected) button.disabled = false; }
+    };
     const logout = root.querySelector('#signout-btn');
     if (logout) {
-      const onLogout = async () => { logout.disabled = true; await signOut(); rerender(); };
+      const change = root.querySelector('#password-change-form');
+      const onChange = (e) => {
+        e.preventDefault();
+        const passwordField = root.querySelector('#auth-new-password');
+        wrap(change.querySelector('button'), async () => {
+          await updatePassword(passwordField.value);
+          passwordField.value = '';
+          status(t('auth.changed'));
+        });
+      };
+      const onLogout = () => wrap(logout, async () => { await signOut(); if (live) rerender(); });
+      change.addEventListener('submit', onChange);
       logout.addEventListener('click', onLogout);
-      return () => logout.removeEventListener('click', onLogout);
+      return () => { live = false; change.removeEventListener('submit', onChange); logout.removeEventListener('click', onLogout); };
     }
-    const form = root.querySelector('#signin-form');
-    const verify = root.querySelector('#verify-form');
-    const emailInput = root.querySelector('#signin-email');
+    const form = root.querySelector('#password-form');
+    const email = root.querySelector('#signin-email');
+    const password = root.querySelector('#signin-password');
+    const submit = root.querySelector('#password-submit');
+    const loginButton = root.querySelector('#mode-login');
+    const signupButton = root.querySelector('#mode-signup');
+    const help = root.querySelector('#password-help');
+    const forgot = root.querySelector('#auth-forgot');
+    const emailForm = root.querySelector('#signin-form');
+    const verifyForm = root.querySelector('#verify-form');
     const codeInput = root.querySelector('#signin-code');
-    const message = root.querySelector('#signin-message');
+    let mode = 'login';
     let pendingEmail = '';
-    let busy = false;
-    let live = true;
-    function showError(error) {
-      if (!live) return;
-      message.textContent = error?.status === 429 ? t('auth.rateLimited') : t('auth.error');
+    function setMode(next) {
+      mode = next;
+      loginButton.classList.toggle('primary', mode === 'login');
+      signupButton.classList.toggle('primary', mode === 'signup');
+      loginButton.setAttribute('aria-pressed', String(mode === 'login'));
+      signupButton.setAttribute('aria-pressed', String(mode === 'signup'));
+      submit.textContent = t(mode === 'signup' ? 'auth.signup' : 'auth.login');
+      password.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+      help.hidden = mode !== 'signup';
+      status('');
     }
-    async function onSend(e) {
+    function onSubmit(e) {
       e.preventDefault();
-      if (busy) return;
-      busy = true; form.querySelector('button').disabled = true;
-      message.textContent = t('auth.sending');
-      try {
-        const email = await requestEmailLogin(emailInput.value);
+      wrap(submit, async () => {
+        if (mode === 'signup') {
+          const result = await signUpWithPassword(email.value, password.value);
+          password.value = '';
+          if (!live) return;
+          if (result.needsConfirmation) { status(t('auth.confirmSignup')); setMode('login'); status(t('auth.confirmSignup')); }
+          else rerender();
+        } else {
+          await signInWithPassword(email.value, password.value);
+          password.value = '';
+          if (live) rerender();
+        }
+      });
+    }
+    function onForgot() {
+      wrap(forgot, async () => {
+        await requestPasswordReset(email.value);
+        status(t('auth.resetSent'));
+      });
+    }
+    function onEmail(e) {
+      e.preventDefault();
+      wrap(emailForm.querySelector('button'), async () => {
+        pendingEmail = await requestEmailLogin(email.value);
         if (!live) return;
-        pendingEmail = email;
-        verify.hidden = false;
-        emailInput.readOnly = true;
-        message.textContent = t('auth.sent');
-        codeInput.focus();
-      } catch (error) { showError(error); }
-      finally { busy = false; if (live) form.querySelector('button').disabled = false; }
+        verifyForm.hidden = false;
+        status(t('auth.sent'));
+      });
     }
-    async function onVerify(e) {
+    function onVerify(e) {
       e.preventDefault();
-      if (busy || !pendingEmail) return;
-      busy = true; verify.querySelector('button').disabled = true;
-      message.textContent = t('auth.checking');
-      try {
+      wrap(verifyForm.querySelector('button'), async () => {
         await verifyEmailCode(pendingEmail, codeInput.value);
+        codeInput.value = '';
         if (live) rerender();
-      } catch (error) { showError(error); }
-      finally { busy = false; if (live && verify.isConnected) verify.querySelector('button').disabled = false; }
+      });
     }
-    form.addEventListener('submit', onSend);
-    verify.addEventListener('submit', onVerify);
-    return () => { live = false; form.removeEventListener('submit', onSend); verify.removeEventListener('submit', onVerify); };
+    const chooseLogin = () => setMode('login');
+    const chooseSignup = () => setMode('signup');
+    form.addEventListener('submit', onSubmit);
+    forgot.addEventListener('click', onForgot);
+    loginButton.addEventListener('click', chooseLogin);
+    signupButton.addEventListener('click', chooseSignup);
+    emailForm.addEventListener('submit', onEmail);
+    verifyForm.addEventListener('submit', onVerify);
+    return () => {
+      live = false;
+      form.removeEventListener('submit', onSubmit);
+      forgot.removeEventListener('click', onForgot);
+      loginButton.removeEventListener('click', chooseLogin);
+      signupButton.removeEventListener('click', chooseSignup);
+      emailForm.removeEventListener('submit', onEmail);
+      verifyForm.removeEventListener('submit', onVerify);
+    };
   },
 };
 
