@@ -1,0 +1,12 @@
+# Never commit runtime secrets or private certificates
+.env
+.env.*
+!.env.example
+!deploy/.env.staging.example
+*.pem
+*.key
+*.p12
+*.pfx
+node_modules/
+coverage/
+*.log
