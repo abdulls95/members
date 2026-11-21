@@ -1,6 +1,5 @@
 import { t, setLang, onLangChange, getLang } from './core/i18n.js';
 import { createRouter } from './core/router.js';
-import { can } from './core/rbac.js';
 import * as store from './core/store.js';
 import { icon, LOGO } from './core/icons.js';
 import { esc } from './core/ui.js';
@@ -22,7 +21,9 @@ export const ROUTES = [
   { path: '/ai', key: 'ai', icon: 'ai', group: 'build', view: P.ai },
   { path: '/osint', key: 'osint', icon: 'osint', group: 'security', view: P.osint },
   { path: '/labs', key: 'labs', icon: 'labs', group: 'security', view: P.labs },
-  { path: '/admin', key: 'admin', icon: 'admin', group: 'account', view: P.admin, perm: 'admin:users' },
+  // Owner console is unavailable until server-verified authentication is deployed.
+  // Keep the old URL as a locked route; never expose it in public navigation.
+  { path: '/admin', key: 'admin', icon: 'admin', group: 'owner-locked', view: P.denied },
   { path: '/settings', key: 'settings', icon: 'settings', group: 'account', view: P.settings },
   { path: '/signin', key: 'signin', icon: 'signin', group: 'account', view: P.signin },
 ];
@@ -33,10 +34,9 @@ let current = { route: null, ctx: null };
 
 function renderChrome() {
   const groups = ['platform', 'build', 'security', 'account'];
-  const role = store.get('previewRole');
   $('#nav').innerHTML = groups.map((g) => `
     <div class="nav-group"><div class="nav-label">${esc(t('nav.' + g))}</div>
-    ${ROUTES.filter((r) => r.group === g && (!r.perm || can(role, r.perm))).map((r) =>
+    ${ROUTES.filter((r) => r.group === g).map((r) =>
     `<a href="#${r.path}" data-path="${r.path}">${icon(r.icon)}<span>${esc(t('nav.' + r.key))}</span></a>`).join('')}</div>`).join('');
   $('#lang-btn').textContent = t('lang.switch');
   $('#backend-pill').lastChild.textContent = t('status.backend');
@@ -55,11 +55,11 @@ function markActive() {
 function renderView() {
   const { route, ctx } = current;
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
-  const role = store.get('previewRole');
+  // Never trust a browser-selected role. Only the backend may authorize owner routes.
   let view = route ? route.view : P.notFound;
-  if (route?.perm && !can(role, route.perm)) view = P.denied;
+  if (ctx?.path === '/admin') view = P.denied;
   const main = $('#main');
-  const fullCtx = { ...ctx, role, rerender: () => { renderChrome(); renderView(); } };
+  const fullCtx = { ...ctx, role: 'guest', rerender: () => { renderChrome(); renderView(); } };
   main.innerHTML = view.render(fullCtx);
   cleanup = view.mount?.(main, fullCtx) || null;
   document.title = `${route ? t('nav.' + route.key) : '404'} · CORNOD`;
