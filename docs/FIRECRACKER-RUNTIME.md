@@ -96,9 +96,11 @@ Every create operation must be idempotent by workspace ID. A retry must discover
 - [x] Tests for request order, invalid inputs, symlink rejection and VMM API failures.
 - [x] Host preflight script (read-only).
 - [ ] Host supervisor and Jailer lifecycle management.
-- [x] Public-destination validation library for resolved A/AAAA answers (policy helper only; not a gateway or firewall).\n- [ ] Network namespace/tap allocator and default-deny egress gateway.
+- [x] Public-destination validation library for resolved A/AAAA answers (policy helper only; not a gateway or firewall).
+- [ ] Network namespace/tap allocator and default-deny egress gateway.
 - [ ] Encrypted workspace volume allocator and cleanup verification.
-- [x] Bounded guest-agent message validator and typed Sherlock request builder (protocol library only; no guest daemon or transport authentication yet).\n- [ ] Guest init/agent daemon, authenticated vsock transport and terminal gateway.
+- [x] Bounded guest-agent message validator and typed Sherlock request builder (protocol library only; no guest daemon or transport authentication yet).
+- [ ] Guest init/agent daemon, authenticated vsock transport and terminal gateway.
 - [ ] End-to-end Firecracker host test on a KVM-capable staging node.
 - [ ] Independent security review before enabling tenant workloads.
 
