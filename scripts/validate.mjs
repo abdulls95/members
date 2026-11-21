@@ -30,11 +30,17 @@ assert.ok(css.length > 5000, "Industrial stylesheet unexpectedly small");
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 assert.equal(ids.length, new Set(ids).size, "HTML IDs must be unique");
 assert.match(app, /export const ROUTES/);
-for (const route of ["/dashboard", "/workspaces", "/terminal", "/files", "/marketplace", "/commands", "/ai", "/osint", "/labs", "/admin", "/settings", "/signin"]) {
+for (const route of ["/dashboard", "/workspaces", "/terminal", "/learn", "/files", "/marketplace", "/commands", "/ai", "/osint", "/labs", "/admin", "/settings", "/signin"]) {
   assert.ok(app.includes("path: '" + route + "'"), "Missing UI route " + route);
 }
 assert.match(app, /Escape/, "Escape must close mobile navigation");
 assert.match(app, /UI gating only; the API enforces for real/, "Client-side role gating must not be represented as security");
+
+const learnView = read("assets/js/views/learn.js");
+const practice = read("assets/js/learn/practice.js");
+assert.match(learnView, /Learning|learn\.notice/);
+assert.match(practice, /UNSUPPORTED_SYNTAX/, "Practice command syntax must be restrictive");
+assert.doesNotMatch(practice, /\b(?:eval|Function|spawn|execSync)\s*\(/, "Practice must never execute host or browser code");
 
 assert.match(terminal, /new DisconnectedAdapter\(\)/, "Terminal must use disconnected adapter without backend config");
 assert.match(terminalAdapter, /NO_BACKEND/, "Disconnected terminal must report no backend");
