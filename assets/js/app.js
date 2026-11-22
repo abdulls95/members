@@ -86,7 +86,12 @@ export function boot() {
   $('#menu-btn').addEventListener('click', () => $('.shell').classList.toggle('nav-open'));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('.shell').classList.remove('nav-open'); });
   onLangChange(() => { renderChrome(); renderView(); });
-  onAuthChange(() => { if (current.ctx) { renderChrome(); renderView(); } });
+  onAuthChange(() => {
+    if (current.ctx?.path === '/signin' && isSignedIn()) {
+      location.hash = '#/dashboard';
+    }
+    if (current.ctx) { renderChrome(); renderView(); }
+  });
 
   // Consume one-time Supabase magic-link tokens before the hash router sees them.
   // The client removes the bearer token from the URL immediately.
