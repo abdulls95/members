@@ -2,6 +2,10 @@
 export const DICT = {
   en: {
     'nav.owner-only': 'Owner',
+    'access.rejectedTitle': 'Access request rejected',
+    'access.rejectedBody': 'Your account was not approved by the owner. You cannot access CORNOD.',
+    'access.checkFailedTitle': 'Could not check account approval',
+    'access.checkFailed': 'The approval service is unavailable or returned an error. Access remains locked. Sign in again later.',
     'access.pendingTitle': 'Waiting for owner approval',
     'access.pendingBody': 'Your email account was verified, but CORNOD access must be approved by the owner before any sections are available.',
     'access.pendingHelp': 'You can access your account page and sign out. Contact the owner if your request remains pending.',
@@ -89,6 +93,10 @@ export const DICT = {
   },
   ar: {
     'nav.owner-only': 'المالك',
+    'access.rejectedTitle': 'رفض المالك طلب الدخول',
+    'access.rejectedBody': 'مالك المنصة لم يوافق على حسابك، لذلك لا تستطيع دخول أقسام CORNOD.',
+    'access.checkFailedTitle': 'تعذّر التحقق من الموافقة',
+    'access.checkFailed': 'تعذّر الاتصال بخدمة الموافقات أو حدث خطأ. تبقى الأقسام مقفلة؛ سجّل الدخول من جديد لاحقًا.',
     'access.pendingTitle': 'حسابك بانتظار موافقة المالك',
     'access.pendingBody': 'تم تأكيد بريدك، لكن لا تستطيع دخول أقسام CORNOD حتى يوافق عليك المالك.',
     'access.pendingHelp': 'تقدر تفتح صفحة حسابك وتسجل خروجك. تواصل مع المالك عند الحاجة.',
