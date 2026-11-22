@@ -35,10 +35,15 @@ let current = { route: null, ctx: null };
 
 function renderChrome() {
   const groups = ['platform', 'build', 'security', 'account'];
-  $('#nav').innerHTML = groups.map((g) => `
+  const authenticated = isSignedIn();
+  // This only gates the browser interface. Static GitHub Pages source remains public.
+  $('#nav').innerHTML = authenticated ? groups.map((g) => `
     <div class="nav-group"><div class="nav-label">${esc(t('nav.' + g))}</div>
     ${ROUTES.filter((r) => r.group === g).map((r) =>
-    `<a href="#${r.path}" data-path="${r.path}">${icon(r.icon)}<span>${esc(t('nav.' + r.key))}</span></a>`).join('')}</div>`).join('');
+    `<a href="#${r.path}" data-path="${r.path}">${icon(r.icon)}<span>${esc(t('nav.' + r.key))}</span></a>`).join('')}</div>`).join('') : '';
+  $('.shell').classList.toggle('auth-locked', !authenticated);
+  $('.sidebar').hidden = !authenticated;
+  $('#menu-btn').hidden = !authenticated;
   $('#lang-btn').textContent = t('lang.switch');
   $('#auth-link').textContent = isSignedIn() ? t('auth.account') : t('auth.title');
   $('#backend-pill').lastChild.textContent = t('status.backend');
@@ -57,14 +62,15 @@ function markActive() {
 function renderView() {
   const { route, ctx } = current;
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
-  // Never trust a browser-selected role. Only the backend may authorize owner routes.
-  let view = route ? route.view : P.notFound;
-  if (ctx?.path === '/admin') view = P.denied;
+  // Always require an authenticated Supabase session before rendering any CORNOD section.
+  // This is a client navigation gate, NOT a server-side access control boundary.
+  let view = !isSignedIn() ? P.signin : (route ? route.view : P.notFound);
+  if (isSignedIn() && ctx?.path === '/admin') view = P.denied;
   const main = $('#main');
   const fullCtx = { ...ctx, role: 'guest', rerender: () => { renderChrome(); renderView(); } };
   main.innerHTML = view.render(fullCtx);
   cleanup = view.mount?.(main, fullCtx) || null;
-  document.title = `${route ? t('nav.' + route.key) : '404'} · CORNOD`;
+  document.title = `${isSignedIn() && route ? t('nav.' + route.key) : t('auth.title')} · CORNOD`;
   markActive();
   $('.shell').classList.remove('nav-open');
 }
