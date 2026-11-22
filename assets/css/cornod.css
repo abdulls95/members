@@ -218,3 +218,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .signin-card .auth-email { direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere; }
 .signin-card button:disabled { opacity: .6; }
 .signin-card #signin-message { min-height: 1.6em; }
+
+/* Sign-in is the only visible page before Supabase verifies a session.
+   This is UI gating, not confidentiality of publicly hosted static files. */
+.shell.auth-locked { grid-template-columns: minmax(0, 1fr); }
+.shell.auth-locked .sidebar, .shell.auth-locked .menu-btn { display: none !important; }
