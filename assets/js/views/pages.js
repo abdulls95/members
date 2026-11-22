@@ -6,6 +6,7 @@ import { can } from '../core/rbac.js';
 import * as store from '../core/store.js';
 import { setLang } from '../core/i18n.js';
 import { requestEmailLogin, verifyEmailCode, getSignedInUser, signOut, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from '../core/auth-client.js';
+import { getAccessStatus } from '../core/access-client.js';
 
 // ---------- Overview ----------
 export const home = {
@@ -158,6 +159,9 @@ export const signin = {
     if (user) return html`<div class="card accent signin-card">
       <div class="eyebrow">CORNOD / ACCOUNT</div>
       <h1>${t('auth.signedIn')}</h1><p class="auth-email">${user.email}</p>
+      ${getAccessStatus() === 'pending' ? raw(html`<div class="notice" role="status"><strong>${t('access.pendingTitle')}</strong><span>${t('access.pendingBody')}</span></div>`) : ''}
+      ${getAccessStatus() === 'rejected' ? raw(html`<div class="notice" role="status"><strong>${t('access.rejectedTitle')}</strong><span>${t('access.rejectedBody')}</span></div>`) : ''}
+      ${getAccessStatus() === 'checking-failed' ? raw(html`<div class="notice" role="status"><span>${t('access.checkFailed')}</span></div>`) : ''}
       <form id="password-change-form">
         <label class="meta block" for="auth-new-password">${t('auth.newPassword')}</label>
         <input class="input w-full" id="auth-new-password" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
@@ -325,13 +329,17 @@ export const status = {
 
 // Email verification is not membership. No protected page renders while pending.
 export const awaitingApproval = {
-  render: () => html`<div class="card accent signin-card">
-    <div class="eyebrow">CORNOD / ACCESS CONTROL</div>
-    <h1>${t('access.pendingTitle')}</h1>
-    <p>${t('access.pendingBody')}</p>
-    <div class="notice"><span>${t('access.pendingHelp')}</span></div>
-    <a class="btn w-full" href="#/signin">${t('access.account')}</a>
-  </div>`,
+  render: () => {
+    const status = getAccessStatus();
+    const title = status === 'rejected' ? 'access.rejectedTitle' : status === 'checking-failed' ? 'access.checkFailedTitle' : 'access.pendingTitle';
+    const body = status === 'rejected' ? 'access.rejectedBody' : status === 'checking-failed' ? 'access.checkFailed' : 'access.pendingBody';
+    return html`<div class="card accent signin-card">
+      <div class="eyebrow">CORNOD / ACCESS CONTROL</div>
+      <h1>${t(title)}</h1><p>${t(body)}</p>
+      <div class="notice"><span>${t('access.pendingHelp')}</span></div>
+      <a class="btn w-full" href="#/signin">${t('access.account')}</a>
+    </div>`;
+  },
 };
 export const denied = { render: () => html`<div class="empty mt-40">${t('admin.locked')}</div>` };
 export const notFound = { render: () => html`<div class="empty mt-40"><h2>404 — ${t('common.notFound')}</h2><a href="#/">${t('common.back')}</a></div>` };
