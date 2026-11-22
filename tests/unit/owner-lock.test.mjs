@@ -19,9 +19,9 @@ test('public settings expose only personal language, no roles or admin actions',
 test('admin route stays locked and invisible even with stale localStorage preview role', () => {
   const app = read('assets/js/app.js');
   const store = read('assets/js/core/store.js');
-  assert.match(app, /path: '\/admin'.*group: 'owner-locked'.*view: P\.denied/);
+  assert.match(app, /path: '\/admin'.*group: 'owner-only'.*view: owner/);
   assert.doesNotMatch(app, /store\.get\('previewRole'\)/);
   assert.doesNotMatch(store, /previewRole/);
-  assert.match(app, /ctx\?\.path === '\/admin'/);
+  assert.match(app, /ctx\?\.path === '\/admin' && access !== 'owner'/);
   assert.match(store, /if \(k !== 'lang'/);
 });
