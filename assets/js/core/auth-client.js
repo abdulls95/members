@@ -7,6 +7,7 @@ let session = null;
 const listeners = new Set();
 export function getSignedInUser() { return session?.user ?? null; }
 export function isSignedIn() { return Boolean(session?.user); }
+export function getAccessToken() { return session?.token ?? null; }
 export function onAuthChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 function emit() { for (const fn of listeners) fn(getSignedInUser()); }
 
