@@ -71,7 +71,7 @@ function renderView() {
   const access = getAccessStatus();
   const allowed = access === 'owner' || access === 'approved';
   let view = !isSignedIn() ? P.signin :
-    !allowed ? P.awaitingApproval : (route ? route.view : P.notFound);
+    !allowed ? (ctx?.path === '/signin' ? P.signin : P.awaitingApproval) : (route ? route.view : P.notFound);
   if (ctx?.path === '/admin' && access !== 'owner' && allowed) view = P.denied;
   const main = $('#main');
   const fullCtx = { ...ctx, role: 'guest', rerender: () => { renderChrome(); renderView(); } };
