@@ -323,5 +323,15 @@ export const status = {
     <tbody>${FEATURES.map(([id, s, name, note]) => raw(html`<tr data-feature="${id}"><td>${L(name)}</td><td>${statusTag(s)}</td><td class="muted">${L(note)}</td></tr>`))}</tbody></table></div>`,
 };
 
+// Email verification is not membership. No protected page renders while pending.
+export const awaitingApproval = {
+  render: () => html`<div class="card accent signin-card">
+    <div class="eyebrow">CORNOD / ACCESS CONTROL</div>
+    <h1>${t('access.pendingTitle')}</h1>
+    <p>${t('access.pendingBody')}</p>
+    <div class="notice"><span>${t('access.pendingHelp')}</span></div>
+    <a class="btn w-full" href="#/signin">${t('access.account')}</a>
+  </div>`,
+};
 export const denied = { render: () => html`<div class="empty mt-40">${t('admin.locked')}</div>` };
 export const notFound = { render: () => html`<div class="empty mt-40"><h2>404 — ${t('common.notFound')}</h2><a href="#/">${t('common.back')}</a></div>` };
